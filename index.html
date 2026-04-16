@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stories by Rushik</title>
+<style>
+/* ── VARIABLES ── */
+:root {
+  --bg: #020408;
+  --surface: rgba(6,10,22,0.88);
+  --surface2: rgba(10,15,30,0.95);
+  --border: rgba(160,185,255,0.07);
+  --border-glow: rgba(123,47,255,0.35);
+  --nebula: #7b2fff;
+  --nebula2: #00cfff;
+  --text: #c8d8f0;
+  --muted: rgba(180,205,255,0.42);
+  --r: 8px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  cursor: none;
+  overflow-x: hidden;
+}
+/* Film grain */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.038;
+  pointer-events: none;
+  z-index: 9998;
+}
+/* Canvas */
+#star-canvas { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; }
+
+/* App */
+#app { position: relative; z-index: 1; min-height: 100vh; }
+
+/* ── CURSOR ── */
+#cursor, #cursor-ring {
+  position: fixed; border-radius: 50%;
+  pointer-events: none; z-index: 10000;
+  transform: translate(-50%, -50%);
+}
+#cursor { width: 7px; height: 7px; background: rgba(255,255,255,0.9); transition: background 0.2s, width 0.15s, height 0.15s; }
+#cursor-ring { width: 30px; height: 30px; border: 1px solid rgba(123,47,255,0.5); z-index: 9999; transition: width 0.25s, height 0.25s, border-color 0.25s; }
+.cursor-hover #cursor { background: var(--nebula2); width: 10px; height: 10px; }
+.cursor-hover #cursor-ring { width: 44px; height: 44px; border-color: rgba(0,207,255,0.45); }
+.cursor-click #cursor { transform: translate(-50%,-50%) scale(0.7); }
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 48px; height: 64px;
+  background: rgba(2,4,8,0.72);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  z-index: 100;
+}
+.nav-brand {
+  font-size: 0.8rem; font-weight: 300;
+  letter-spacing: 0.38em; text-transform: uppercase;
+  color: var(--text); text-decoration: none; cursor: none;
+}
+.nav-brand em { font-style: normal; color: var(--nebula2); }
+.nav-links { display: flex; gap: 32px; list-style: none; }
+.nav-links a {
+  color: var(--muted); font-size: 0.72rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  text-decoration: none; transition: color 0.2s; cursor: none;
+}
+.nav-links a:hover { color: var(--text); }
+.nav-social { display: flex; gap: 8px; margin-left: 24px; }
+.nav-social-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 13px; border-radius: 7px;
+  font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
+  text-decoration: none; border: 1px solid; cursor: none;
+  transition: all 0.22s; font-family: inherit;
+}
+.nav-ig { background: rgba(225,48,108,0.08); border-color: rgba(225,48,108,0.22); color: #f0a0b8; }
+.nav-ig:hover { background: rgba(225,48,108,0.18); border-color: rgba(225,48,108,0.5); color: #ffc0cc; box-shadow: 0 0 18px rgba(225,48,108,0.18); }
+.nav-vsco { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); color: var(--muted); }
+.nav-vsco:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.25); color: var(--text); }
+@media (max-width: 700px) { .nav-social span { display: none; } .nav-social-btn { padding: 7px 10px; } }
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center; padding: 80px 40px 60px;
+  position: relative;
+}
+.hero-eyebrow {
+  font-size: 0.68rem; letter-spacing: 0.45em; text-transform: uppercase;
+  color: var(--nebula2); margin-bottom: 28px; opacity: 0.75;
+}
+.hero-title {
+  font-size: clamp(3rem, 9vw, 8rem);
+  font-weight: 200; letter-spacing: 0.12em;
+  text-transform: uppercase; line-height: 1.02;
+  margin-bottom: 28px;
+}
+.hero-title .line1 {
+  display: block;
+  background: linear-gradient(135deg, #fff 0%, rgba(180,205,255,0.65) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.hero-title .line2 {
+  display: block; font-weight: 700;
+  background: linear-gradient(135deg, var(--nebula) 0%, var(--nebula2) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.hero-sub {
+  font-size: 0.88rem; letter-spacing: 0.07em;
+  color: var(--muted); max-width: 340px;
+  margin-bottom: 52px; line-height: 1.9;
+}
+.hero-cta {
+  display: flex; gap: 14px; flex-wrap: wrap; justify-content: center;
+}
+.hero-scroll {
+  position: absolute; bottom: 36px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  color: var(--muted); font-size: 0.62rem; letter-spacing: 0.25em; text-transform: uppercase;
+}
+.scroll-line {
+  width: 1px; height: 44px;
+  background: linear-gradient(to bottom, rgba(123,47,255,0.7), transparent);
+  animation: scrollPulse 2.2s ease-in-out infinite;
+}
+@keyframes scrollPulse {
+  0%,100% { opacity: 0.35; transform: scaleY(1); }
+  50% { opacity: 1; transform: scaleY(1.15); }
+}
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 24px; border-radius: var(--r);
+  font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase;
+  cursor: none; border: none; transition: all 0.25s; font-family: inherit;
+  outline: none;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--nebula), #4a10c0);
+  color: #fff; box-shadow: 0 0 24px rgba(123,47,255,0.22);
+}
+.btn-primary:hover { box-shadow: 0 0 40px rgba(123,47,255,0.45); transform: translateY(-1px); }
+.btn-ghost {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--muted);
+}
+.btn-ghost:hover { border-color: var(--border-glow); color: var(--text); background: rgba(123,47,255,0.06); }
+.btn-sm { padding: 8px 18px; font-size: 0.68rem; }
+
+/* ── SECTION ── */
+.section { padding: 80px 48px; }
+.section-header {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  margin-bottom: 40px;
+}
+.section-eyebrow { font-size: 0.66rem; letter-spacing: 0.32em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.section-title { font-size: 1.4rem; font-weight: 300; letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* ── ALBUM GRID ── */
+.album-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+.album-card {
+  position: relative; aspect-ratio: 4/3;
+  border-radius: 12px; overflow: hidden;
+  cursor: none; border: 1px solid var(--border);
+  background: var(--surface);
+  transition: transform 0.35s cubic-bezier(0.25,0.46,0.45,0.94), border-color 0.3s, box-shadow 0.3s;
+}
+.album-card:hover {
+  transform: translateY(-5px) scale(1.015);
+  border-color: var(--border-glow);
+  box-shadow: 0 12px 50px rgba(123,47,255,0.2), 0 0 0 1px rgba(123,47,255,0.1);
+}
+.album-card-img {
+  width: 100%; height: 100%; object-fit: cover;
+  transition: transform 0.55s cubic-bezier(0.25,0.46,0.45,0.94);
+}
+.album-card:hover .album-card-img { transform: scale(1.07); }
+.album-placeholder {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.4rem; opacity: 0.12;
+}
+.album-card-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(transparent 42%, rgba(2,4,8,0.88) 100%);
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: 18px;
+}
+.album-card-name { font-size: 0.92rem; font-weight: 500; letter-spacing: 0.04em; margin-bottom: 4px; }
+.album-card-count { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+.album-card-menu {
+  position: absolute; top: 10px; right: 10px;
+  width: 28px; height: 28px; border-radius: 6px;
+  background: rgba(2,4,8,0.75); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.2s, border-color 0.2s;
+  cursor: none; font-size: 1rem; color: var(--muted);
+}
+.album-card:hover .album-card-menu { opacity: 1; }
+.album-card-menu:hover { border-color: var(--border-glow); color: var(--text); }
+
+/* New album card */
+.album-card-new {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 12px;
+  background: transparent;
+  border: 1px dashed rgba(123,47,255,0.28);
+}
+.album-card-new:hover {
+  border-color: var(--nebula);
+  background: rgba(123,47,255,0.04);
+  transform: translateY(-3px);
+  box-shadow: none;
+}
+.album-card-new-icon {
+  width: 48px; height: 48px; border-radius: 12px;
+  background: rgba(123,47,255,0.1); border: 1px solid rgba(123,47,255,0.22);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; transition: background 0.2s;
+}
+.album-card-new:hover .album-card-new-icon { background: rgba(123,47,255,0.2); }
+.album-card-new-label { font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+
+/* ── FOLDER VIEW ── */
+#folder-view { display: none; }
+.folder-header {
+  display: flex; align-items: center; gap: 16px;
+  padding: 80px 48px 24px; flex-wrap: wrap;
+}
+.back-btn {
+  display: flex; align-items: center; gap: 8px;
+  color: var(--muted); font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase;
+  cursor: none; background: none; border: none; font-family: inherit;
+  transition: color 0.2s; padding: 0; outline: none;
+}
+.back-btn:hover { color: var(--text); }
+.vdivider { width: 1px; height: 18px; background: var(--border); }
+.folder-title { font-size: 1.1rem; font-weight: 300; letter-spacing: 0.18em; text-transform: uppercase; }
+.folder-count { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.1em; }
+.folder-actions { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+
+/* Drop zone */
+.drop-zone {
+  margin: 0 48px 32px;
+  border: 1px dashed rgba(123,47,255,0.28);
+  border-radius: 12px;
+  padding: 28px 20px;
+  text-align: center;
+  cursor: none;
+  transition: all 0.25s;
+}
+.drop-zone:hover, .drop-zone.drag-over {
+  border-color: var(--nebula);
+  background: rgba(123,47,255,0.05);
+}
+.drop-zone.drag-over { transform: scale(1.005); }
+.drop-zone-icon { font-size: 1.6rem; margin-bottom: 8px; opacity: 0.5; }
+.drop-zone p { color: var(--muted); font-size: 0.8rem; letter-spacing: 0.04em; }
+.drop-zone strong { color: var(--nebula2); }
+
+/* ── MASONRY ── */
+.masonry-wrap { padding: 0 48px 80px; }
+.masonry { columns: 3 200px; column-gap: 8px; }
+.masonry-item {
+  break-inside: avoid;
+  margin-bottom: 8px;
+  cursor: none;
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+  display: block;
+}
+.masonry-item img {
+  width: 100%; height: auto; display: block;
+  transition: transform 0.55s cubic-bezier(0.25,0.46,0.45,0.94);
+}
+.masonry-item:hover img { transform: scale(1.05); }
+.masonry-glow {
+  position: absolute; inset: 0; pointer-events: none;
+  box-shadow: inset 0 0 0 rgba(123,47,255,0);
+  transition: box-shadow 0.45s;
+  border-radius: 6px;
+}
+.masonry-item:hover .masonry-glow { box-shadow: inset 0 0 50px rgba(123,47,255,0.18); }
+.masonry-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(transparent 52%, rgba(2,4,8,0.78) 100%);
+  opacity: 0; transition: opacity 0.3s;
+  display: flex; align-items: flex-end; padding: 12px;
+}
+.masonry-item:hover .masonry-overlay { opacity: 1; }
+.masonry-img-name { font-size: 0.72rem; color: rgba(255,255,255,0.8); letter-spacing: 0.06em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.masonry-actions {
+  position: absolute; top: 7px; right: 7px;
+  display: flex; gap: 5px;
+  opacity: 0; transition: opacity 0.2s;
+}
+.masonry-item:hover .masonry-actions { opacity: 1; }
+.img-btn {
+  width: 26px; height: 26px; border-radius: 5px;
+  background: rgba(2,4,8,0.8); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  cursor: none; font-size: 0.68rem; color: var(--muted);
+  transition: border-color 0.2s, color 0.2s;
+}
+.img-btn:hover { border-color: var(--border-glow); color: var(--text); }
+
+/* Empty state */
+.empty-state {
+  padding: 80px 40px; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+}
+.empty-icon { font-size: 2.8rem; opacity: 0.15; }
+.empty-text { color: var(--muted); font-size: 0.85rem; letter-spacing: 0.08em; }
+
+/* ── LIGHTBOX ── */
+#lightbox {
+  position: fixed; inset: 0;
+  background: rgba(1,2,6,0.97);
+  backdrop-filter: blur(10px);
+  z-index: 1000;
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+#lightbox.open { display: flex; }
+.lb-bg-glow {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(123,47,255,0.06) 0%, transparent 65%);
+}
+.lb-close {
+  position: fixed; top: 22px; right: 26px;
+  width: 38px; height: 38px; border-radius: 8px;
+  background: var(--surface); border: 1px solid var(--border);
+  cursor: none; display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; color: var(--muted); transition: all 0.2s;
+}
+.lb-close:hover { border-color: var(--border-glow); color: var(--text); }
+.lb-img-wrap { position: relative; max-width: 90vw; max-height: 82vh; }
+#lb-img {
+  max-width: 90vw; max-height: 82vh;
+  object-fit: contain; border-radius: 4px;
+  box-shadow: 0 0 80px rgba(0,0,0,0.7);
+  transition: opacity 0.22s;
+}
+#lb-img.fade { opacity: 0; }
+.lb-nav {
+  position: fixed; top: 50%; transform: translateY(-50%);
+  width: 42px; height: 42px; border-radius: 10px;
+  background: var(--surface); border: 1px solid var(--border);
+  cursor: none; display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; color: var(--muted); transition: all 0.2s;
+}
+.lb-nav:hover { border-color: var(--border-glow); color: var(--text); background: var(--surface2); }
+#lb-prev { left: 18px; }
+#lb-next { right: 18px; }
+.lb-nav.disabled { opacity: 0.2; pointer-events: none; }
+.lb-footer {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  padding: 18px 48px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: linear-gradient(transparent, rgba(2,4,8,0.85));
+}
+.lb-info { display: flex; flex-direction: column; gap: 3px; }
+.lb-name { font-size: 0.8rem; color: rgba(255,255,255,0.7); letter-spacing: 0.06em; }
+.lb-folder { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.08em; }
+.lb-counter { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.12em; }
+.lb-dl-btn {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 7px; padding: 7px 14px;
+  font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted); cursor: none; font-family: inherit;
+  transition: all 0.2s; outline: none;
+}
+.lb-dl-btn:hover { border-color: var(--border-glow); color: var(--text); }
+
+/* ── MODALS ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(1,2,6,0.82);
+  backdrop-filter: blur(10px);
+  z-index: 500;
+  display: none; align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: rgba(7,10,22,0.98);
+  border: 1px solid var(--border);
+  border-radius: 16px; padding: 36px;
+  min-width: 400px; max-width: 90vw;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(123,47,255,0.08);
+  animation: modalIn 0.25s ease;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.modal-title { font-size: 0.95rem; font-weight: 400; letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 6px; }
+.modal-sub { font-size: 0.78rem; color: var(--muted); margin-bottom: 28px; line-height: 1.7; }
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.form-input {
+  width: 100%; padding: 10px 14px;
+  background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  border-radius: var(--r); color: var(--text);
+  font-family: inherit; font-size: 0.88rem; outline: none;
+  transition: border-color 0.2s;
+}
+.form-input:focus { border-color: var(--border-glow); }
+textarea.form-input { resize: vertical; min-height: 96px; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 22px; }
+
+/* ── CONTEXT MENU ── */
+#ctx-menu {
+  position: fixed;
+  background: rgba(7,10,22,0.98); border: 1px solid var(--border);
+  border-radius: 10px; padding: 6px;
+  min-width: 158px; z-index: 2000;
+  display: none; box-shadow: 0 14px 40px rgba(0,0,0,0.5);
+}
+#ctx-menu.open { display: block; }
+.ctx-item {
+  padding: 8px 12px; border-radius: 6px;
+  font-size: 0.8rem; color: var(--muted);
+  cursor: none; transition: all 0.15s;
+  display: flex; align-items: center; gap: 10px;
+  letter-spacing: 0.03em;
+}
+.ctx-item:hover { background: rgba(123,47,255,0.1); color: var(--text); }
+.ctx-item.danger:hover { background: rgba(239,68,68,0.1); color: #ef4444; }
+.ctx-sep { height: 1px; background: var(--border); margin: 5px 0; }
+
+/* ── ABOUT ── */
+.about-wrap {
+  max-width: 640px; margin: 0 auto;
+  padding: 80px 48px; text-align: center;
+}
+.about-wrap h2 { font-size: 1.2rem; font-weight: 300; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 32px; }
+.about-wrap p { color: var(--muted); font-size: 0.9rem; line-height: 1.95; margin-bottom: 16px; }
+
+/* ── FOOTER ── */
+footer {
+  padding: 36px 48px;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  color: var(--muted); font-size: 0.7rem; letter-spacing: 0.12em;
+}
+footer a { color: var(--muted); text-decoration: none; transition: color 0.2s; cursor: none; }
+footer a:hover { color: var(--text); }
+
+/* ── TOASTS ── */
+#toast-wrap {
+  position: fixed; bottom: 26px; right: 26px;
+  display: flex; flex-direction: column; gap: 8px; z-index: 3000;
+}
+.toast {
+  padding: 11px 16px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; font-size: 0.8rem; letter-spacing: 0.03em;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.4);
+  animation: toastIn 0.28s ease;
+  max-width: 280px;
+}
+.toast.success { border-color: rgba(0,207,255,0.25); }
+.toast.error   { border-color: rgba(239,68,68,0.3); }
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.fade-in { animation: fadeIn 0.38s ease; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── SOCIAL BUTTONS ── */
+.social-btn {
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 10px 20px; border-radius: 10px;
+  font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase;
+  cursor: none; border: 1px solid; text-decoration: none;
+  transition: all 0.25s; font-family: inherit; font-weight: 500;
+}
+.social-btn-ig {
+  background: rgba(225,48,108,0.08); border-color: rgba(225,48,108,0.22);
+  color: #f0a0b8;
+}
+.social-btn-ig:hover {
+  background: rgba(225,48,108,0.16); border-color: rgba(225,48,108,0.45);
+  color: #ffc0cc; transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(225,48,108,0.18);
+}
+.social-btn-vsco {
+  background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.12); color: var(--muted);
+}
+.social-btn-vsco:hover {
+  background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.28);
+  color: var(--text); transform: translateY(-2px);
+}
+
+/* ── ABOUT REDESIGN ── */
+.about-redesign {
+  max-width: 780px; margin: 0 auto;
+  padding: 80px 48px;
+  display: grid; grid-template-columns: auto 1fr;
+  gap: 52px; align-items: start;
+}
+.about-avatar {
+  width: 108px; height: 108px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--nebula), var(--nebula2));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.4rem; font-weight: 300; color: #fff; flex-shrink: 0;
+  border: 1px solid rgba(123,47,255,0.3);
+  box-shadow: 0 0 40px rgba(123,47,255,0.2), 0 0 0 4px rgba(123,47,255,0.08);
+}
+.about-content h2 {
+  font-size: 1.4rem; font-weight: 300; letter-spacing: 0.08em; margin-bottom: 6px;
+}
+.about-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 0.68rem; color: var(--nebula2); letter-spacing: 0.14em;
+  text-transform: uppercase; margin-bottom: 22px; opacity: 0.8;
+}
+.about-content p {
+  color: var(--muted); font-size: 0.9rem; line-height: 1.95; margin-bottom: 14px;
+}
+.about-social { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 24px; margin-bottom: 18px; }
+
+/* ── FEATURED WALL ── */
+.featured-section { padding: 0 48px 60px; }
+.featured-grid { columns: 4 150px; column-gap: 8px; }
+.featured-item {
+  break-inside: avoid; margin-bottom: 8px;
+  cursor: none; position: relative; overflow: hidden;
+  border-radius: 6px; display: block;
+  border: 1px solid transparent; transition: border-color 0.3s;
+}
+.featured-item:hover { border-color: rgba(0,207,255,0.3); }
+.featured-item img { width: 100%; height: auto; display: block; transition: transform 0.5s; }
+.featured-item:hover img { transform: scale(1.04); }
+
+/* ── FEATURE TOGGLE BUTTON ── */
+.img-btn.active { border-color: rgba(0,207,255,0.5) !important; color: var(--nebula2) !important; }
+
+/* ── SLIDESHOW ── */
+#lb-progress-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  height: 2px; background: rgba(255,255,255,0.07);
+  display: none; z-index: 1001;
+}
+#lb-progress { height: 100%; background: linear-gradient(90deg, var(--nebula), var(--nebula2)); width: 0; transition: width 0.05s linear; }
+.lb-ss-btn {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 7px; padding: 7px 14px; font-size: 0.7rem; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--muted); cursor: none; font-family: inherit;
+  transition: all 0.2s; outline: none;
+}
+.lb-ss-btn:hover { border-color: var(--border-glow); color: var(--text); }
+.lb-ss-btn.playing { border-color: rgba(0,207,255,0.4); color: var(--nebula2); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 700px) {
+  .about-redesign { grid-template-columns: 1fr; text-align: center; gap: 28px; padding: 60px 20px; }
+  .about-avatar { margin: 0 auto; }
+  .about-social { justify-content: center; }
+  .featured-section { padding: 0 20px 48px; }
+  .featured-grid { columns: 2; }
+}
+/* ── RESPONSIVE (original) ── */
+@media (max-width: 700px) {
+  nav { padding: 0 20px; }
+  .nav-links { gap: 18px; }
+  .section { padding: 60px 20px; }
+  .masonry { columns: 2; }
+  .masonry-wrap { padding: 0 20px 60px; }
+  .drop-zone { margin: 0 20px 24px; }
+  .folder-header { padding: 80px 20px 24px; }
+  .modal { min-width: unset; padding: 28px 20px; }
+  footer { flex-direction: column; gap: 12px; text-align: center; }
+  .lb-footer { padding: 14px 20px; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="star-canvas"></canvas>
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<div id="app">
+
+  <!-- NAV -->
+  <nav>
+    <a href="#" class="nav-brand" onclick="return goHome()">Stories <em>by</em> Rushik</a>
+    <ul class="nav-links">
+      <li><a href="#" onclick="return goHome()">Work</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#" onclick="openModal('contact-modal'); return false;">Contact</a></li>
+    </ul>
+    <div class="nav-social">
+      <a href="https://www.instagram.com/rushiksaii/" target="_blank" rel="noopener" class="nav-social-btn nav-ig" title="Instagram">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+        <span>Instagram</span>
+      </a>
+      <a href="https://vsco.co/rushikkashetty/gallery" target="_blank" rel="noopener" class="nav-social-btn nav-vsco" title="VSCO">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/></svg>
+        <span>VSCO</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- HOME VIEW -->
+  <div id="home-view">
+    <section class="hero">
+      <div class="hero-eyebrow">Visual Storytelling · Photography</div>
+      <h1 class="hero-title">
+        <span class="line1">Stories</span>
+        <span class="line2">by Rushik</span>
+      </h1>
+      <p class="hero-sub">Capturing moments that live between heartbeats and the cosmos.</p>
+      <div class="hero-cta">
+        <button class="btn btn-primary" onclick="document.getElementById('work').scrollIntoView({behavior:'smooth'})">View Work</button>
+        <button class="btn btn-ghost" onclick="openModal('contact-modal')">Get in Touch</button>
+      </div>
+      <div class="hero-scroll">
+        <div class="scroll-line"></div>
+        <span>Scroll</span>
+      </div>
+    </section>
+
+    <!-- FEATURED WALL -->
+    <div id="featured-section" class="featured-section" style="display:none;">
+      <div class="section-header" style="padding:0 0 24px;">
+        <div>
+          <div class="section-eyebrow">Curated</div>
+          <div class="section-title">Featured</div>
+        </div>
+      </div>
+      <div class="featured-grid" id="featured-grid"></div>
+    </div>
+
+    <section class="section" id="work">
+      <div class="section-header">
+        <div>
+          <div class="section-eyebrow">Portfolio</div>
+          <div class="section-title">My Work</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openModal('album-modal')">+ New Album</button>
+      </div>
+      <div class="album-grid" id="album-grid"></div>
+    </section>
+
+    <section id="about">
+      <div class="about-redesign">
+        <div class="about-avatar">R</div>
+        <div class="about-content">
+          <div class="section-eyebrow" style="margin-bottom:10px;">About</div>
+          <h2>Rushik Sai Kashetty</h2>
+          <div class="about-tag">✦ Photographer &nbsp;·&nbsp; Visual Storyteller</div>
+          <p>I'm drawn to the quiet drama of light and shadow — the moments most people walk past without looking up. My work lives in the space between the ordinary and the cosmic.</p>
+          <p>From portraits to landscapes to the candid in-between, every frame is an invitation to see the world a little differently.</p>
+          <p>Open to portraits, events, editorial, and creative collaborations. Let's make something together.</p>
+          <div class="about-social">
+            <a href="https://www.instagram.com/rushiksaii/" target="_blank" rel="noopener" class="social-btn social-btn-ig">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+              Instagram
+            </a>
+            <a href="https://vsco.co/rushikkashetty/gallery" target="_blank" rel="noopener" class="social-btn social-btn-vsco">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/></svg>
+              VSCO
+            </a>
+          </div>
+          <button class="btn btn-ghost" onclick="openModal('contact-modal')">Work Together →</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- FOLDER VIEW -->
+  <div id="folder-view">
+    <div class="folder-header">
+      <button class="back-btn" onclick="goHome()">← Back</button>
+      <div class="vdivider"></div>
+      <div>
+        <div class="folder-title" id="folder-title"></div>
+        <div class="folder-count" id="folder-count"></div>
+      </div>
+      <div class="folder-actions">
+        <button class="btn btn-ghost btn-sm" onclick="triggerUpload()">+ Add Photos</button>
+      </div>
+    </div>
+
+    <div class="drop-zone" id="drop-zone">
+      <div class="drop-zone-icon">✦</div>
+      <p>Drop photos here · or <strong>click to upload</strong></p>
+      <p style="font-size:0.7rem;opacity:0.45;margin-top:5px;">JPG · PNG · WEBP · GIF supported</p>
+    </div>
+
+    <div class="masonry-wrap">
+      <div class="masonry" id="masonry"></div>
+    </div>
+  </div>
+
+  <footer>
+    <div>© 2026 Stories by Rushik</div>
+    <div style="display:flex;gap:24px;">
+      <a href="https://www.instagram.com/rushiksaii/" target="_blank" rel="noopener">Instagram</a>
+      <a href="https://vsco.co/rushikkashetty/gallery" target="_blank" rel="noopener">VSCO</a>
+    </div>
+  </footer>
+</div>
+
+<!-- LIGHTBOX -->
+<div id="lightbox">
+  <div class="lb-bg-glow"></div>
+  <button class="lb-close" onclick="closeLightbox()">✕</button>
+  <button class="lb-nav" id="lb-prev" onclick="lbGo(-1)">‹</button>
+  <div class="lb-img-wrap">
+    <img id="lb-img" src="" alt="">
+  </div>
+  <button class="lb-nav" id="lb-next" onclick="lbGo(1)">›</button>
+  <div class="lb-footer">
+    <div class="lb-info">
+      <div class="lb-name" id="lb-name"></div>
+      <div class="lb-folder" id="lb-folder-name"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span class="lb-counter" id="lb-counter"></span>
+      <button class="lb-ss-btn" id="lb-play-btn" onclick="toggleSlideshow()">▶ Slideshow</button>
+      <button class="lb-dl-btn" onclick="lbDownload()">↓ Download</button>
+    </div>
+  </div>
+  <div id="lb-progress-bar"><div id="lb-progress"></div></div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="album-modal">
+  <div class="modal">
+    <div class="modal-title">New Album</div>
+    <div class="modal-sub">Create a collection to organise your photographs.</div>
+    <div class="form-group">
+      <label class="form-label">Album Name</label>
+      <input type="text" id="album-name-input" class="form-input" placeholder="e.g. Golden Hour, Portraits, Travel 2025">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('album-modal')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="createAlbum()">Create Album</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="rename-modal">
+  <div class="modal">
+    <div class="modal-title">Rename Album</div>
+    <div class="form-group" style="margin-top:18px;">
+      <label class="form-label">New Name</label>
+      <input type="text" id="rename-input" class="form-input" placeholder="Album name">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('rename-modal')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="confirmRename()">Rename</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="contact-modal">
+  <div class="modal">
+    <div class="modal-title">Get in Touch</div>
+    <div class="modal-sub">Tell me about your project or collaboration idea.</div>
+    <div class="form-group">
+      <label class="form-label">Name</label>
+      <input type="text" id="c-name" class="form-input" placeholder="Your name">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input type="email" id="c-email" class="form-input" placeholder="your@email.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Message</label>
+      <textarea id="c-msg" class="form-input" placeholder="What are you working on?"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('contact-modal')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="sendContact()">Send Message</button>
+    </div>
+  </div>
+</div>
+
+<div id="ctx-menu"></div>
+<div id="toast-wrap"></div>
+<input type="file" id="file-input" multiple accept="image/*" style="display:none">
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// DATABASE
+// ══════════════════════════════════════════════════════════════
+class PhotoDB {
+  constructor() { this.db = null; }
+  open() {
+    if (this.db) return Promise.resolve();
+    return new Promise((res, rej) => {
+      const r = indexedDB.open('SBR_v1', 1);
+      r.onupgradeneeded = e => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains('imgs'))
+          db.createObjectStore('imgs', { keyPath: 'id' });
+      };
+      r.onsuccess = e => { this.db = e.target.result; res(); };
+      r.onerror = rej;
+    });
+  }
+  async put(id, dataUrl) {
+    await this.open();
+    return new Promise((res, rej) => {
+      const tx = this.db.transaction('imgs', 'readwrite');
+      tx.objectStore('imgs').put({ id, dataUrl });
+      tx.oncomplete = res; tx.onerror = rej;
+    });
+  }
+  async get(id) {
+    await this.open();
+    return new Promise((res, rej) => {
+      const tx = this.db.transaction('imgs', 'readonly');
+      const req = tx.objectStore('imgs').get(id);
+      req.onsuccess = e => res(e.target.result?.dataUrl);
+      req.onerror = rej;
+    });
+  }
+  async del(id) {
+    await this.open();
+    return new Promise((res, rej) => {
+      const tx = this.db.transaction('imgs', 'readwrite');
+      tx.objectStore('imgs').delete(id);
+      tx.oncomplete = res; tx.onerror = rej;
+    });
+  }
+}
+const db = new PhotoDB();
+
+// ══════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════
+const KEY = 'sbr_state_v2';
+let state = { folders: [] };
+let currentFolderId = null;
+let renaming = null;
+const cache = {};
+
+const uid = () => 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
+function load() { try { const s = localStorage.getItem(KEY); if (s) state = JSON.parse(s); } catch(_) {} if (!state.featured) state.featured = []; }
+function folder() { return state.folders.find(f => f.id === currentFolderId); }
+
+// ══════════════════════════════════════════════════════════════
+// STAR CANVAS
+// ══════════════════════════════════════════════════════════════
+function initStars() {
+  const canvas = document.getElementById('star-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, stars = [], nebulas = [], shoots = [];
+  const mouse = { x: 0.5, y: 0.5 };
+  let frame = 0, lastShoot = 0;
+
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    stars = Array.from({ length: 300 }, () => ({
+      x: Math.random() * W, y: Math.random() * H,
+      r: Math.random() < 0.12 ? Math.random() * 1.8 + 0.8 : Math.random() * 0.9 + 0.1,
+      op: Math.random() * 0.55 + 0.15,
+      sp: Math.random() * 0.018 + 0.004,
+      ph: Math.random() * Math.PI * 2,
+      layer: Math.random() * 2.5,
+    }));
+    nebulas = [
+      { x: 0.15, y: 0.28, r: 0.22, c: 'rgba(123,47,255,0.045)' },
+      { x: 0.72, y: 0.18, r: 0.28, c: 'rgba(0,207,255,0.032)' },
+      { x: 0.48, y: 0.72, r: 0.32, c: 'rgba(100,30,200,0.04)' },
+      { x: 0.88, y: 0.55, r: 0.22, c: 'rgba(0,160,220,0.028)' },
+    ];
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    frame++;
+    nebulas.forEach(n => {
+      const nx = n.x * W + (mouse.x - 0.5) * 6;
+      const ny = n.y * H + (mouse.y - 0.5) * 6;
+      const g = ctx.createRadialGradient(nx, ny, 0, nx, ny, n.r * W);
+      g.addColorStop(0, n.c); g.addColorStop(1, 'transparent');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(nx, ny, n.r * W, 0, Math.PI * 2); ctx.fill();
+    });
+    stars.forEach(s => {
+      s.ph += s.sp;
+      const op = s.op * (0.55 + 0.45 * Math.sin(s.ph));
+      const px = ((s.x + (mouse.x - 0.5) * s.layer * 9) % W + W) % W;
+      const py = ((s.y + (mouse.y - 0.5) * s.layer * 9) % H + H) % H;
+      if (s.r > 1.2) { ctx.shadowBlur = 5; ctx.shadowColor = `rgba(200,220,255,${op * 0.6})`; }
+      ctx.beginPath(); ctx.arc(px, py, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(200,220,255,${op})`; ctx.fill();
+      ctx.shadowBlur = 0;
+    });
+    if (frame - lastShoot > 220 + Math.random() * 280) {
+      lastShoot = frame;
+      shoots.push({ x: Math.random() * W * 0.7, y: Math.random() * H * 0.4, vx: 5 + Math.random() * 4, vy: 1.8 + Math.random() * 2, life: 1 });
+    }
+    shoots = shoots.filter(s => {
+      s.x += s.vx; s.y += s.vy; s.life -= 0.022;
+      if (s.life <= 0) return false;
+      const g = ctx.createLinearGradient(s.x, s.y, s.x - s.vx * 12, s.y - s.vy * 12);
+      g.addColorStop(0, `rgba(255,255,255,${s.life * 0.85})`); g.addColorStop(1, 'transparent');
+      ctx.strokeStyle = g; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(s.x - s.vx * 14, s.y - s.vy * 14); ctx.stroke();
+      return true;
+    });
+    requestAnimationFrame(draw);
+  }
+
+  document.addEventListener('mousemove', e => { mouse.x = e.clientX / W; mouse.y = e.clientY / H; });
+  window.addEventListener('resize', resize);
+  resize(); draw();
+}
+
+// ══════════════════════════════════════════════════════════════
+// CURSOR
+// ══════════════════════════════════════════════════════════════
+function initCursor() {
+  const dot = document.getElementById('cursor');
+  const ring = document.getElementById('cursor-ring');
+  let mx = window.innerWidth / 2, my = window.innerHeight / 2;
+  let rx = mx, ry = my;
+
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    dot.style.left = mx + 'px'; dot.style.top = my + 'px';
+  });
+  document.addEventListener('mousedown', () => document.body.classList.add('cursor-click'));
+  document.addEventListener('mouseup',   () => document.body.classList.remove('cursor-click'));
+
+  (function animRing() {
+    rx += (mx - rx) * 0.11; ry += (my - ry) * 0.11;
+    ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+    requestAnimationFrame(animRing);
+  })();
+
+  window._attachHover = () => {
+    document.querySelectorAll(
+      '.masonry-item,.featured-item,.album-card,.btn,.back-btn,.lb-nav,.lb-close,.ctx-item,.img-btn,.lb-dl-btn,.lb-ss-btn,.nav-links a,.nav-brand,.drop-zone,footer a,.album-card-menu,.social-btn'
+    ).forEach(el => {
+      el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'));
+      el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'));
+    });
+  };
+}
+
+// ══════════════════════════════════════════════════════════════
+// VIEWS
+// ══════════════════════════════════════════════════════════════
+function goHome() {
+  currentFolderId = null;
+  document.getElementById('home-view').style.display = 'block';
+  document.getElementById('folder-view').style.display = 'none';
+  renderAlbums();
+  renderFeatured();
+  return false;
+}
+
+function openFolderView(folderId) {
+  currentFolderId = folderId;
+  document.getElementById('home-view').style.display = 'none';
+  document.getElementById('folder-view').style.display = 'block';
+  const f = folder();
+  document.getElementById('folder-title').textContent = f.name;
+  document.getElementById('folder-count').textContent = f.images.length + ' photo' + (f.images.length !== 1 ? 's' : '');
+  renderMasonry();
+}
+
+// ══════════════════════════════════════════════════════════════
+// ALBUMS
+// ══════════════════════════════════════════════════════════════
+function renderAlbums() {
+  const grid = document.getElementById('album-grid');
+  grid.innerHTML = '';
+
+  state.folders.forEach(f => {
+    const card = document.createElement('div');
+    card.className = 'album-card fade-in';
+    card.onclick = () => openFolderView(f.id);
+    const coverUrl = f.cover ? cache[f.cover] : null;
+    card.innerHTML = `
+      ${coverUrl ? `<img class="album-card-img" src="${coverUrl}" alt="${f.name}">` : `<div class="album-placeholder">✦</div>`}
+      <div class="album-card-overlay">
+        <div class="album-card-name">${f.name}</div>
+        <div class="album-card-count">${f.images.length} photo${f.images.length !== 1 ? 's' : ''}</div>
+      </div>
+      <div class="album-card-menu" onclick="event.stopPropagation();showAlbumCtx(event,'${f.id}')">⋯</div>
+    `;
+    grid.appendChild(card);
+
+    if (f.cover && !cache[f.cover]) {
+      db.get(f.cover).then(url => {
+        if (!url) return;
+        cache[f.cover] = url;
+        const ph = card.querySelector('.album-placeholder');
+        if (ph) {
+          const img = document.createElement('img');
+          img.className = 'album-card-img'; img.src = url; img.alt = f.name;
+          card.insertBefore(img, ph); ph.remove();
+        } else {
+          const img = card.querySelector('.album-card-img');
+          if (img) img.src = url;
+        }
+      });
+    }
+  });
+
+  const nc = document.createElement('div');
+  nc.className = 'album-card album-card-new';
+  nc.onclick = () => openModal('album-modal');
+  nc.innerHTML = `<div class="album-card-new-icon">+</div><div class="album-card-new-label">New Album</div>`;
+  grid.appendChild(nc);
+
+  if (window._attachHover) window._attachHover();
+}
+
+function createAlbum() {
+  const name = document.getElementById('album-name-input').value.trim();
+  if (!name) { toast('Enter an album name', 'error'); return; }
+  const f = { id: uid(), name, images: [], cover: null, createdAt: Date.now() };
+  state.folders.push(f);
+  save();
+  closeModal('album-modal');
+  document.getElementById('album-name-input').value = '';
+  toast(`"${name}" created`);
+  openFolderView(f.id);
+}
+
+function showAlbumCtx(e, folderId) {
+  showCtx(e.clientX, e.clientY, [
+    { label: '✎  Rename', action: () => startRename(folderId) },
+    { sep: true },
+    { label: '🗑  Delete Album', action: () => deleteAlbum(folderId), danger: true },
+  ]);
+}
+function startRename(folderId) {
+  renaming = folderId;
+  const f = state.folders.find(x => x.id === folderId);
+  document.getElementById('rename-input').value = f.name;
+  openModal('rename-modal');
+}
+function confirmRename() {
+  const name = document.getElementById('rename-input').value.trim();
+  if (!name) return;
+  const f = state.folders.find(x => x.id === renaming);
+  if (f) {
+    f.name = name; save();
+    toast(`Renamed to "${name}"`);
+    if (currentFolderId === renaming) document.getElementById('folder-title').textContent = name;
+    renderAlbums();
+  }
+  closeModal('rename-modal');
+}
+async function deleteAlbum(folderId) {
+  const f = state.folders.find(x => x.id === folderId);
+  if (!f || !confirm(`Delete "${f.name}" and all its photos?`)) return;
+  for (const img of f.images) { await db.del(img.id); delete cache[img.id]; }
+  state.folders = state.folders.filter(x => x.id !== folderId);
+  save(); toast('Album deleted');
+  if (currentFolderId === folderId) goHome(); else renderAlbums();
+}
+
+// ══════════════════════════════════════════════════════════════
+// FEATURED WALL
+// ══════════════════════════════════════════════════════════════
+async function renderFeatured() {
+  const section = document.getElementById('featured-section');
+  const valid = state.featured.filter(x => {
+    const f = state.folders.find(f => f.id === x.folderId);
+    return f && f.images.some(img => img.id === x.imageId);
+  });
+  // Prune stale refs
+  if (valid.length !== state.featured.length) { state.featured = valid; save(); }
+  if (!valid.length) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  const grid = document.getElementById('featured-grid');
+  grid.innerHTML = '';
+  for (const { imageId, folderId } of valid) {
+    const f = state.folders.find(x => x.id === folderId);
+    const meta = f.images.find(img => img.id === imageId);
+    let url = cache[imageId] || await db.get(imageId);
+    if (!url) continue;
+    cache[imageId] = url;
+    const item = document.createElement('div');
+    item.className = 'featured-item masonry-item fade-in';
+    item.innerHTML = `
+      <img src="${url}" alt="${meta.name}" loading="lazy">
+      <div class="masonry-glow"></div>
+      <div class="masonry-overlay"><span class="masonry-img-name">${f.name}</span></div>
+      <div class="masonry-actions">
+        <div class="img-btn active" title="Unfeature" onclick="event.stopPropagation();toggleFeatured('${imageId}','${folderId}')">♥</div>
+      </div>
+    `;
+    item.addEventListener('click', () => openFeaturedLightbox(imageId, folderId));
+    grid.appendChild(item);
+  }
+  if (window._attachHover) window._attachHover();
+}
+
+function isFeatured(imageId) {
+  return state.featured.some(x => x.imageId === imageId);
+}
+
+function toggleFeatured(imageId, folderId) {
+  const idx = state.featured.findIndex(x => x.imageId === imageId);
+  if (idx >= 0) {
+    state.featured.splice(idx, 1);
+    toast('Removed from Featured');
+  } else {
+    state.featured.push({ imageId, folderId });
+    toast('Added to Featured ✓');
+  }
+  save();
+  renderFeatured();
+  if (currentFolderId === folderId) renderMasonry();
+}
+
+function openFeaturedLightbox(imageId, folderId) {
+  const savedFolder = currentFolderId;
+  currentFolderId = folderId;
+  const f = folder();
+  if (!f) { currentFolderId = savedFolder; return; }
+  const idx = f.images.findIndex(img => img.id === imageId);
+  lbImgs = f.images; lbIdx = Math.max(0, idx);
+  document.getElementById('lightbox').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  updateLb();
+}
+
+// ══════════════════════════════════════════════════════════════
+// SLIDESHOW
+// ══════════════════════════════════════════════════════════════
+let ssTimer = null, ssProgressTimer = null, ssProgress = 0;
+const SS_MS = 3500;
+
+function startSlideshow() {
+  stopSlideshow();
+  ssProgress = 0;
+  const btn = document.getElementById('lb-play-btn');
+  const bar = document.getElementById('lb-progress-bar');
+  btn.textContent = '⏸ Pause'; btn.classList.add('playing');
+  bar.style.display = 'block';
+  ssProgressTimer = setInterval(() => {
+    ssProgress = Math.min(100, ssProgress + (100 / (SS_MS / 50)));
+    document.getElementById('lb-progress').style.width = ssProgress + '%';
+  }, 50);
+  ssTimer = setInterval(() => {
+    ssProgress = 0;
+    lbIdx = (lbIdx + 1) % lbImgs.length;
+    updateLb();
+  }, SS_MS);
+}
+
+function stopSlideshow() {
+  clearInterval(ssTimer); clearInterval(ssProgressTimer);
+  ssTimer = ssProgressTimer = null; ssProgress = 0;
+  const btn = document.getElementById('lb-play-btn');
+  const bar = document.getElementById('lb-progress-bar');
+  if (btn) { btn.textContent = '▶ Slideshow'; btn.classList.remove('playing'); }
+  if (bar) { bar.style.display = 'none'; document.getElementById('lb-progress').style.width = '0'; }
+}
+
+function toggleSlideshow() { ssTimer ? stopSlideshow() : startSlideshow(); }
+
+// ══════════════════════════════════════════════════════════════
+// MASONRY
+// ══════════════════════════════════════════════════════════════
+async function renderMasonry() {
+  const grid = document.getElementById('masonry');
+  const f = folder();
+  grid.innerHTML = '';
+  document.getElementById('folder-count').textContent = f.images.length + ' photo' + (f.images.length !== 1 ? 's' : '');
+
+  if (!f.images.length) {
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">✦</div><div class="empty-text">No photos yet — drop some above to begin.</div></div>`;
+    return;
+  }
+
+  for (let i = 0; i < f.images.length; i++) {
+    const meta = f.images[i];
+    let url = cache[meta.id] || await db.get(meta.id);
+    if (!url) continue;
+    cache[meta.id] = url;
+
+    const item = document.createElement('div');
+    item.className = 'masonry-item fade-in';
+    item.innerHTML = `
+      <img src="${url}" alt="${meta.name}" loading="lazy">
+      <div class="masonry-glow"></div>
+      <div class="masonry-overlay"><span class="masonry-img-name">${meta.name}</span></div>
+      <div class="masonry-actions">
+        <div class="img-btn ${isFeatured(meta.id) ? 'active' : ''}" title="${isFeatured(meta.id) ? 'Unfeature' : 'Feature'}" onclick="event.stopPropagation();toggleFeatured('${meta.id}','${currentFolderId}')">♥</div>
+        <div class="img-btn" title="Set as cover" onclick="event.stopPropagation();setCover('${meta.id}')">★</div>
+        <div class="img-btn" title="Download"     onclick="event.stopPropagation();downloadImg('${meta.id}','${meta.name}')">↓</div>
+        <div class="img-btn" title="Delete"       onclick="event.stopPropagation();deleteImg('${meta.id}')">✕</div>
+      </div>
+    `;
+    item.addEventListener('click', () => openLightbox(i));
+    grid.appendChild(item);
+  }
+  if (window._attachHover) window._attachHover();
+}
+
+function setCover(imageId) {
+  const f = folder(); if (!f) return;
+  f.cover = imageId; save(); toast('Cover updated ✓');
+}
+async function deleteImg(imageId) {
+  const f = folder(); if (!f) return;
+  if (f.cover === imageId) f.cover = null;
+  f.images = f.images.filter(i => i.id !== imageId);
+  await db.del(imageId); delete cache[imageId];
+  save(); toast('Photo deleted'); renderMasonry();
+}
+async function downloadImg(imageId, name) {
+  const url = cache[imageId] || await db.get(imageId);
+  if (!url) return;
+  const a = document.createElement('a'); a.href = url; a.download = name; a.click();
+}
+
+// ══════════════════════════════════════════════════════════════
+// UPLOAD
+// ══════════════════════════════════════════════════════════════
+function triggerUpload() { document.getElementById('file-input').click(); }
+
+document.getElementById('file-input').addEventListener('change', e => {
+  handleFiles(e.target.files); e.target.value = '';
+});
+
+async function handleFiles(files) {
+  const f = folder(); if (!f) return;
+  const imgs = Array.from(files).filter(x => x.type.startsWith('image/'));
+  if (!imgs.length) { toast('No valid images found', 'error'); return; }
+  toast(`Uploading ${imgs.length} photo${imgs.length > 1 ? 's' : ''}…`);
+  for (const file of imgs) {
+    const id = uid();
+    const url = await new Promise((res, rej) => {
+      const r = new FileReader(); r.onload = e => res(e.target.result); r.onerror = rej; r.readAsDataURL(file);
+    });
+    await db.put(id, url);
+    cache[id] = url;
+    f.images.push({ id, name: file.name, size: file.size, createdAt: Date.now() });
+    if (!f.cover) f.cover = id;
+  }
+  save(); toast(`${imgs.length} photo${imgs.length > 1 ? 's' : ''} added ✓`); renderMasonry();
+}
+
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag-over'); handleFiles(e.dataTransfer.files); });
+dz.addEventListener('click', triggerUpload);
+
+// ══════════════════════════════════════════════════════════════
+// LIGHTBOX
+// ══════════════════════════════════════════════════════════════
+let lbIdx = 0, lbImgs = [];
+
+async function openLightbox(index) {
+  const f = folder(); if (!f) return;
+  lbImgs = f.images; lbIdx = index;
+  document.getElementById('lightbox').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  await updateLb();
+}
+async function updateLb() {
+  const meta = lbImgs[lbIdx]; if (!meta) return;
+  const imgEl = document.getElementById('lb-img');
+  imgEl.classList.add('fade');
+  let url = cache[meta.id] || await db.get(meta.id);
+  if (url) { cache[meta.id] = url; imgEl.src = url; }
+  requestAnimationFrame(() => imgEl.classList.remove('fade'));
+  document.getElementById('lb-name').textContent = meta.name;
+  document.getElementById('lb-folder-name').textContent = folder()?.name || '';
+  document.getElementById('lb-counter').textContent = `${lbIdx + 1} / ${lbImgs.length}`;
+  document.getElementById('lb-prev').classList.toggle('disabled', lbIdx === 0);
+  document.getElementById('lb-next').classList.toggle('disabled', lbIdx === lbImgs.length - 1);
+}
+function closeLightbox() {
+  stopSlideshow();
+  document.getElementById('lightbox').classList.remove('open');
+  document.body.style.overflow = '';
+}
+async function lbGo(dir) {
+  const n = lbIdx + dir;
+  if (n >= 0 && n < lbImgs.length) { lbIdx = n; await updateLb(); }
+}
+function lbDownload() {
+  const meta = lbImgs[lbIdx]; if (!meta) return;
+  downloadImg(meta.id, meta.name);
+}
+
+let touchX = 0;
+document.getElementById('lightbox').addEventListener('touchstart', e => { touchX = e.changedTouches[0].clientX; });
+document.getElementById('lightbox').addEventListener('touchend',   e => { const dx = e.changedTouches[0].clientX - touchX; if (Math.abs(dx) > 48) lbGo(dx > 0 ? -1 : 1); });
+
+// ══════════════════════════════════════════════════════════════
+// MODALS
+// ══════════════════════════════════════════════════════════════
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); }));
+
+function sendContact() {
+  const name = document.getElementById('c-name').value.trim();
+  const email = document.getElementById('c-email').value.trim();
+  const msg = document.getElementById('c-msg').value.trim();
+  if (!name || !email || !msg) { toast('Please fill all fields', 'error'); return; }
+  closeModal('contact-modal');
+  ['c-name','c-email','c-msg'].forEach(id => document.getElementById(id).value = '');
+  toast("Message sent — I'll be in touch soon ✓");
+}
+
+// ══════════════════════════════════════════════════════════════
+// CONTEXT MENU
+// ══════════════════════════════════════════════════════════════
+function showCtx(x, y, items) {
+  const menu = document.getElementById('ctx-menu');
+  menu.innerHTML = '';
+  items.forEach(item => {
+    if (item.sep) { const s = document.createElement('div'); s.className = 'ctx-sep'; menu.appendChild(s); return; }
+    const el = document.createElement('div');
+    el.className = 'ctx-item' + (item.danger ? ' danger' : '');
+    el.textContent = item.label;
+    el.onclick = () => { hideCtx(); item.action(); };
+    menu.appendChild(el);
+  });
+  menu.style.left = Math.min(x, window.innerWidth - 170) + 'px';
+  menu.style.top  = y + 'px';
+  menu.classList.add('open');
+  setTimeout(() => {
+    const r = menu.getBoundingClientRect();
+    if (r.bottom > window.innerHeight) menu.style.top = (y - r.height) + 'px';
+  }, 0);
+}
+function hideCtx() { document.getElementById('ctx-menu').classList.remove('open'); }
+document.addEventListener('click', e => { if (!e.target.closest('#ctx-menu')) hideCtx(); });
+
+// ══════════════════════════════════════════════════════════════
+// TOASTS
+// ══════════════════════════════════════════════════════════════
+function toast(msg, type = 'success') {
+  const wrap = document.getElementById('toast-wrap');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`; el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(() => { el.style.transition = 'opacity 0.3s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 320); }, 3200);
+}
+
+// ══════════════════════════════════════════════════════════════
+// KEYBOARD
+// ══════════════════════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (document.getElementById('lightbox').classList.contains('open')) {
+    if (e.key === 'Escape')      closeLightbox();
+    if (e.key === 'ArrowLeft')   lbGo(-1);
+    if (e.key === 'ArrowRight')  lbGo(1);
+  } else if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+    hideCtx();
+  }
+});
+document.getElementById('album-name-input').addEventListener('keydown', e => { if (e.key === 'Enter') createAlbum(); });
+document.getElementById('rename-input').addEventListener('keydown',     e => { if (e.key === 'Enter') confirmRename(); });
+
+// ══════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════
+async function init() {
+  await db.open();
+  load();
+  initStars();
+  initCursor();
+  goHome();
+  for (const f of state.folders) {
+    if (f.cover && !cache[f.cover]) db.get(f.cover).then(url => { if (url) cache[f.cover] = url; });
+  }
+}
+init();
+</script>
+</body>
+</html>
