@@ -477,7 +477,7 @@
 <script type="module">
   import { initializeApp }
     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-  import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut }
+  import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut }
     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
   import { getFirestore, collection, getDocs, doc, getDoc, setDoc,
            addDoc, updateDoc, deleteDoc, serverTimestamp, orderBy, query }
@@ -511,12 +511,9 @@
   // ── auth ─────────────────────────────────────────────────────
   document.getElementById('googleLoginBtn').addEventListener('click', async () => {
     try {
-      await signInWithRedirect(auth, new GoogleAuthProvider());
+      await signInWithPopup(auth, new GoogleAuthProvider());
     } catch(e) { toast('Sign-in failed: ' + e.message); }
   });
-
-  // Handle redirect result on page load
-  getRedirectResult(auth).catch(e => console.warn('Redirect result error:', e));
 
   document.getElementById('signOutBtn').addEventListener('click', () => signOut(auth));
 
