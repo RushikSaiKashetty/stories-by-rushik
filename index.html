@@ -5,7 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Stories by Rushik</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23030308'/><text x='16' y='23' font-family='Georgia,serif' font-size='20' fill='%23c8a96e' text-anchor='middle' font-weight='400'>R</text></svg>" />
-  <meta name="description" content="Photography portfolio by Rushik — Portraits, Weddings, Nature, Travel" />
+
+  <!-- SEO -->
+  <meta name="description" content="Photography portfolio by Rushik — Portraits, Weddings, Nature and Travel photography." />
+  <meta name="keywords" content="Rushik, photographer, portraits, wedding photography, nature, travel, Stories by Rushik" />
+  <meta name="author" content="Rushik" />
+
+  <!-- Open Graph (WhatsApp, Instagram, iMessage previews) -->
+  <meta property="og:type"        content="website" />
+  <meta property="og:url"         content="https://stories-by-rushik.vercel.app" />
+  <meta property="og:title"       content="Stories by Rushik" />
+  <meta property="og:description" content="Portraits · Weddings · Nature · Travel — Photography by Rushik" />
+  <meta property="og:image"       content="https://stories-by-rushik.vercel.app/preview.jpg" />
+
+  <!-- Twitter / X card -->
+  <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:title"       content="Stories by Rushik" />
+  <meta name="twitter:description" content="Portraits · Weddings · Nature · Travel — Photography by Rushik" />
+  <meta name="twitter:image"       content="https://stories-by-rushik.vercel.app/preview.jpg" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -287,6 +304,32 @@
       color: rgba(255,255,255,.55); font-size: .82rem; font-family: sans-serif; text-align: center; max-width: 80vw;
     }
 
+    /* ─── SKELETON ─── */
+    .skeleton-grid { columns: 2 140px; column-gap: 8px; }
+    .skeleton-box {
+      break-inside: avoid; margin-bottom: 8px;
+      border-radius: var(--radius); overflow: hidden;
+      background: linear-gradient(90deg, var(--bg2) 25%, var(--bg3) 50%, var(--bg2) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.6s infinite;
+    }
+    .skeleton-box.h1 { height: 220px; }
+    .skeleton-box.h2 { height: 160px; }
+    .skeleton-box.h3 { height: 280px; }
+    .skeleton-box.h4 { height: 190px; }
+    .skeleton-box.h5 { height: 240px; }
+    .skeleton-box.h6 { height: 170px; }
+    .skeleton-card {
+      border-radius: var(--radius); margin-bottom: 18px;
+      background: linear-gradient(90deg, var(--bg2) 25%, var(--bg3) 50%, var(--bg2) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.6s infinite; height: 120px;
+    }
+    @keyframes shimmer {
+      0%   { background-position:  200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
     /* ─── STATES ─── */
     .loading, .empty-state {
       color: var(--text2); font-size: .85rem; font-family: sans-serif;
@@ -374,7 +417,10 @@
   <section id="featured">
     <h2 class="section-title">Featured</h2>
     <div class="section-divider"></div>
-    <div class="featured-grid" id="featuredGrid"><div class="loading">Loading…</div></div>
+    <div class="featured-grid" id="featuredGrid">
+      <div class="skeleton-box h1"></div><div class="skeleton-box h3"></div>
+      <div class="skeleton-box h2"></div><div class="skeleton-box h4"></div>
+    </div>
   </section>
 
   <!-- WORK -->
@@ -382,7 +428,10 @@
     <h2 class="section-title">Work</h2>
     <div class="section-divider"></div>
     <div class="album-tabs" id="albumTabs"></div>
-    <div class="masonry-grid" id="masonryGrid"><div class="loading">Select an album above</div></div>
+    <div class="masonry-grid" id="masonryGrid">
+      <div class="skeleton-box h3"></div><div class="skeleton-box h1"></div><div class="skeleton-box h5"></div>
+      <div class="skeleton-box h2"></div><div class="skeleton-box h4"></div><div class="skeleton-box h6"></div>
+    </div>
   </section>
 
   <!-- ABOUT -->
@@ -417,7 +466,9 @@
   <section id="testimonials">
     <h2 class="section-title">What clients say</h2>
     <div class="section-divider"></div>
-    <div class="testimonials-grid" id="testimonialsGrid"><div class="loading">Loading…</div></div>
+    <div class="testimonials-grid" id="testimonialsGrid">
+      <div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div>
+    </div>
   </section>
 
   <!-- HIRE ME -->
@@ -695,6 +746,9 @@
     document.getElementById('mobileMenu').classList.toggle('open'));
   window.closeMobile = () => document.getElementById('mobileMenu').classList.remove('open');
 </script>
+
+<!-- VERCEL ANALYTICS -->
+<script defer src="/_vercel/insights/script.js"></script>
 
 <!-- STAR CANVAS -->
 <script>
