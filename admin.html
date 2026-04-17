@@ -380,11 +380,11 @@
           </select>
         </div>
         <div class="upload-zone" id="uploadZone">
-          <input type="file" id="fileInput" multiple accept="image/*" style="display:none" />
+          <input type="file" id="fileInput" multiple accept="image/*" style="position:absolute;opacity:0;width:0;height:0;" />
           <div class="upload-prompt" id="uploadPrompt">
             <p>Drop photos here or tap to choose</p>
             <p class="upload-hint">Works from phone camera or gallery</p>
-            <label class="upload-btn-label" for="fileInput">Choose Photos</label>
+            <button type="button" class="upload-btn-label" id="choosePhotosBtn">Choose Photos</button>
           </div>
           <div id="uploadProgress" style="display:none">
             <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
@@ -730,20 +730,37 @@
 
   // ─── UPLOAD ──────────────────────────────────────────────────
   function setupUploadZone() {
-    const zone     = document.getElementById('uploadZone');
-    const fileInput= document.getElementById('fileInput');
+    const zone      = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+    const chooseBtn = document.getElementById('choosePhotosBtn');
 
-    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
-    zone.addEventListener('dragleave',  () => zone.classList.remove('drag-over'));
+    // Button click → open file picker
+    chooseBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      fileInput.value = ''; // reset so same file can be re-selected
+      fileInput.click();
+    });
+
+    // Drag & drop
+    zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', ()  => zone.classList.remove('drag-over'));
     zone.addEventListener('drop', e => {
       e.preventDefault(); zone.classList.remove('drag-over');
+      console.log('Files dropped:', e.dataTransfer.files.length);
       uploadFiles(e.dataTransfer.files);
     });
-    fileInput.addEventListener('change', () => uploadFiles(fileInput.files));
+
+    // File selected
+    fileInput.addEventListener('change', function() {
+      console.log('Files selected:', this.files.length);
+      if (this.files.length) uploadFiles(this.files);
+    });
   }
 
   async function uploadFiles(files) {
+    console.log('uploadFiles called — count:', files.length);
     const albumId = document.getElementById('photoAlbumSelect').value;
+    console.log('albumId:', albumId);
     if (!albumId) { toast('Select an album first!'); return; }
     const fileArr = Array.from(files);
     if (!fileArr.length) return;
