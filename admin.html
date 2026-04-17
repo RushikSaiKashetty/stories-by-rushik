@@ -477,7 +477,7 @@
 <script type="module">
   import { initializeApp }
     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-  import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut }
+  import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut }
     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
   import { getFirestore, collection, getDocs, doc, getDoc, setDoc,
            addDoc, updateDoc, deleteDoc, serverTimestamp, orderBy, query }
@@ -499,7 +499,7 @@
   const db   = getFirestore(app);
 
   // ── helpers ──────────────────────────────────────────────────
-  function toast(msg, dur=3000) {
+  function toast(msg, dur=4000) {
     const el = document.getElementById('toast');
     el.textContent = msg; el.classList.add('show');
     setTimeout(() => el.classList.remove('show'), dur);
@@ -511,9 +511,12 @@
   // ── auth ─────────────────────────────────────────────────────
   document.getElementById('googleLoginBtn').addEventListener('click', async () => {
     try {
-      await signInWithPopup(auth, new GoogleAuthProvider());
+      await signInWithRedirect(auth, new GoogleAuthProvider());
     } catch(e) { toast('Sign-in failed: ' + e.message); }
   });
+
+  // Handle redirect result on page load
+  getRedirectResult(auth).catch(e => console.warn('Redirect result error:', e));
 
   document.getElementById('signOutBtn').addEventListener('click', () => signOut(auth));
 
@@ -745,7 +748,8 @@
   async function uploadFiles(files) {
     const albumId = document.getElementById('photoAlbumSelect').value;
     if (!albumId) { toast('Select an album first!'); return; }
-    if (!files.length) return;
+    const fileArr = Array.from(files);
+    if (!fileArr.length) return;
 
     const prompt  = document.getElementById('uploadPrompt');
     const progress= document.getElementById('uploadProgress');
@@ -756,18 +760,24 @@
     progress.style.display = 'block';
 
     let done = 0;
-    for (const file of Array.from(files)) {
-      text.textContent = `Uploading ${done+1} of ${files.length}…`;
-      fill.style.width = `${Math.round((done/files.length)*100)}%`;
+    for (const file of fileArr) {
+      text.textContent = `Uploading ${done+1} of ${fileArr.length}…`;
+      fill.style.width = `${Math.round((done/fileArr.length)*100)}%`;
       try {
+        console.log('Uploading to Cloudinary:', file.name);
         const { publicId, url } = await uploadToCloudinary(file);
+        console.log('Cloudinary OK:', publicId);
         await addDoc(collection(db,'photos'), {
           albumId, cloudinaryId: publicId, cloudinaryUrl: url,
           caption: '', featured: false, published: true,
           uploadedAt: serverTimestamp()
         });
+        console.log('Firestore OK');
         done++;
-      } catch(e) { toast('Upload failed: ' + e.message); }
+      } catch(e) {
+        console.error('Upload error:', e);
+        toast('Upload failed: ' + e.message, 6000);
+      }
     }
 
     fill.style.width = '100%';
