@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin · Stories by Rushik</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:    #030308;
+      --bg2:   #09090f;
+      --bg3:   #0f0f1c;
+      --panel: #111118;
+      --text:  #e8e4dc;
+      --text2: #9a9590;
+      --gold:  #c8a96e;
+      --green: #4caf82;
+      --red:   #e05c5c;
+      --blue:  #5c9de0;
+      --radius: 8px;
+      --sidebar: 220px;
+    }
+    html, body { height: 100%; }
+    body { background: var(--bg); color: var(--text); font-family: sans-serif; }
+
+    /* ─── LOGIN ─── */
+    #loginScreen {
+      min-height: 100vh; display: flex;
+      align-items: center; justify-content: center;
+      background: radial-gradient(ellipse at 30% 30%, rgba(110,70,200,.12), transparent 60%),
+                  radial-gradient(ellipse at 70% 70%, rgba(200,70,120,.08), transparent 60%),
+                  var(--bg);
+    }
+    .login-card {
+      background: var(--panel); border: 1px solid rgba(200,169,110,.15);
+      border-radius: 16px; padding: 48px 40px; text-align: center;
+      max-width: 380px; width: 90%;
+    }
+    .login-card h1 { font-size: 1.4rem; font-weight: 300; letter-spacing: .2em; color: var(--gold); margin-bottom: 8px; font-family: Georgia,serif; }
+    .login-card p  { color: var(--text2); font-size: .82rem; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 36px; }
+    .btn-google {
+      display: inline-flex; align-items: center; gap: 12px;
+      background: #fff; color: #222; padding: 13px 24px;
+      border-radius: 32px; border: none; cursor: pointer;
+      font-size: .9rem; font-weight: 500; width: 100%;
+      justify-content: center; transition: opacity .2s;
+    }
+    .btn-google:hover { opacity: .9; }
+
+    /* ─── LAYOUT ─── */
+    #adminDash { display: none; height: 100vh; }
+    .admin-layout { display: flex; height: 100%; }
+
+    /* ─── SIDEBAR ─── */
+    .sidebar {
+      width: var(--sidebar); flex-shrink: 0;
+      background: var(--panel); border-right: 1px solid rgba(255,255,255,.06);
+      display: flex; flex-direction: column;
+      padding: 0; overflow-y: auto;
+    }
+    .sidebar-logo {
+      padding: 20px 20px 16px; font-size: .85rem; letter-spacing: .2em;
+      color: var(--gold); border-bottom: 1px solid rgba(255,255,255,.06);
+      font-family: Georgia,serif;
+    }
+    .sidebar-nav { flex: 1; padding: 10px 0; }
+    .tab-btn {
+      display: flex; align-items: center; gap: 10px;
+      width: 100%; padding: 12px 20px;
+      background: none; border: none; color: var(--text2);
+      font-size: .82rem; cursor: pointer; letter-spacing: .06em;
+      text-align: left; transition: all .18s;
+      border-left: 3px solid transparent;
+    }
+    .tab-btn:hover { color: var(--text); background: rgba(255,255,255,.04); }
+    .tab-btn.active { color: var(--gold); background: rgba(200,169,110,.07); border-left-color: var(--gold); }
+    .sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,.06); }
+    .btn-signout {
+      width: 100%; padding: 10px; background: none;
+      border: 1px solid rgba(255,255,255,.1); color: var(--text2);
+      border-radius: var(--radius); cursor: pointer; font-size: .8rem;
+      transition: all .2s;
+    }
+    .btn-signout:hover { border-color: var(--red); color: var(--red); }
+
+    /* ─── MOBILE SIDEBAR TOGGLE ─── */
+    .mob-header {
+      display: none; position: sticky; top: 0; z-index: 50;
+      background: var(--panel); border-bottom: 1px solid rgba(255,255,255,.06);
+      padding: 14px 16px; align-items: center; gap: 12px;
+    }
+    .mob-header span { color: var(--gold); font-size: .9rem; letter-spacing: .15em; font-family: Georgia,serif; flex:1; }
+    .mob-menu-btn { background: none; border: none; color: var(--gold); font-size: 1.3rem; cursor: pointer; }
+    .sidebar-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 49;
+    }
+    .sidebar-overlay.open { display: block; }
+
+    /* ─── MAIN CONTENT ─── */
+    .admin-main { flex: 1; overflow-y: auto; }
+    .tab-content { display: none; padding: 28px 24px; max-width: 960px; }
+    .tab-content.active { display: block; }
+    .tab-content h2 {
+      font-size: 1.2rem; font-weight: 400; letter-spacing: .15em;
+      color: var(--text); margin-bottom: 24px; padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+    }
+
+    /* ─── TOOLBAR ─── */
+    .toolbar {
+      display: flex; gap: 10px; flex-wrap: wrap;
+      margin-bottom: 24px; align-items: center;
+    }
+    .toolbar input, .toolbar select {
+      background: var(--bg3); border: 1px solid rgba(255,255,255,.1);
+      color: var(--text); padding: 10px 14px; border-radius: var(--radius);
+      font-size: .85rem; outline: none; flex: 1; min-width: 160px;
+      transition: border-color .2s;
+    }
+    .toolbar input:focus, .toolbar select:focus { border-color: var(--gold); }
+
+    /* ─── BUTTONS ─── */
+    .btn-primary {
+      background: var(--gold); color: var(--bg);
+      border: none; padding: 10px 20px; border-radius: var(--radius);
+      cursor: pointer; font-size: .82rem; font-weight: 600;
+      letter-spacing: .06em; transition: opacity .2s; white-space: nowrap;
+    }
+    .btn-primary:hover { opacity: .85; }
+    .btn-secondary {
+      background: rgba(255,255,255,.07); color: var(--text2);
+      border: 1px solid rgba(255,255,255,.12); padding: 10px 20px;
+      border-radius: var(--radius); cursor: pointer; font-size: .82rem;
+      transition: all .2s;
+    }
+    .btn-secondary:hover { color: var(--text); }
+    .btn-icon {
+      background: none; border: none; cursor: pointer;
+      font-size: 1rem; padding: 6px 8px; border-radius: 6px;
+      transition: background .2s;
+    }
+    .btn-icon:hover { background: rgba(255,255,255,.08); }
+    .btn-danger { color: var(--red) !important; }
+
+    /* ─── CARDS / LIST ITEMS ─── */
+    .list-item {
+      background: var(--panel); border: 1px solid rgba(255,255,255,.07);
+      border-radius: var(--radius); padding: 14px 16px;
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 8px; transition: border-color .2s;
+    }
+    .list-item:hover { border-color: rgba(200,169,110,.2); }
+    .list-item-info { flex: 1; min-width: 0; }
+    .list-item-name { font-size: .9rem; color: var(--text); margin-bottom: 2px; }
+    .list-item-meta { font-size: .75rem; color: var(--text2); }
+    .list-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+
+    /* BADGE */
+    .badge {
+      font-size: .68rem; padding: 3px 9px; border-radius: 12px;
+      font-weight: 600; letter-spacing: .06em;
+    }
+    .badge-pub   { background: rgba(76,175,130,.15); color: var(--green); }
+    .badge-draft { background: rgba(255,255,255,.07); color: var(--text2); }
+    .badge-new   { background: rgba(92,157,224,.15); color: var(--blue); }
+    .badge-approved { background: rgba(76,175,130,.15); color: var(--green); }
+    .badge-pending  { background: rgba(200,169,110,.12); color: var(--gold); }
+
+    /* TOGGLE SWITCH */
+    .toggle-wrap { display: flex; align-items: center; gap: 8px; }
+    .toggle-label { font-size: .75rem; color: var(--text2); }
+    .toggle {
+      position: relative; width: 36px; height: 20px;
+      display: inline-block; cursor: pointer;
+    }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; inset: 0;
+      background: rgba(255,255,255,.1);
+      border-radius: 20px; transition: .3s;
+    }
+    .toggle-slider::before {
+      content: ''; position: absolute;
+      width: 14px; height: 14px; border-radius: 50%;
+      left: 3px; bottom: 3px; background: var(--text2); transition: .3s;
+    }
+    .toggle input:checked + .toggle-slider { background: var(--green); }
+    .toggle input:checked + .toggle-slider::before { transform: translateX(16px); background: #fff; }
+
+    /* ─── UPLOAD ZONE ─── */
+    .upload-zone {
+      border: 2px dashed rgba(200,169,110,.25);
+      border-radius: 12px; padding: 32px 20px;
+      text-align: center; cursor: pointer;
+      transition: all .2s; margin-bottom: 24px;
+      background: rgba(200,169,110,.02);
+    }
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color: var(--gold); background: rgba(200,169,110,.06);
+    }
+    .upload-prompt p { color: var(--text2); font-size: .9rem; margin-bottom: 6px; }
+    .upload-hint { font-size: .78rem !important; color: var(--text2); opacity: .7; }
+    .upload-btn-label {
+      display: inline-block; margin-top: 14px;
+      background: var(--gold); color: var(--bg);
+      padding: 10px 24px; border-radius: 24px;
+      font-size: .82rem; font-weight: 600; cursor: pointer;
+    }
+    .progress-bar {
+      background: rgba(255,255,255,.1); border-radius: 8px;
+      height: 6px; overflow: hidden; margin: 12px auto; max-width: 320px;
+    }
+    .progress-fill { height: 100%; background: var(--gold); border-radius: 8px; transition: width .2s; width: 0%; }
+    #progressText { font-size: .82rem; color: var(--text2); margin-top: 8px; }
+
+    /* ─── PHOTOS GRID ─── */
+    .photos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px,1fr));
+      gap: 10px;
+    }
+    .photo-card {
+      background: var(--panel); border-radius: var(--radius);
+      overflow: hidden; border: 1px solid rgba(255,255,255,.07);
+      transition: border-color .2s;
+    }
+    .photo-card:hover { border-color: rgba(200,169,110,.25); }
+    .photo-card img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+    .photo-card-body { padding: 8px; }
+    .photo-caption-input {
+      width: 100%; background: none; border: none;
+      border-bottom: 1px solid rgba(255,255,255,.1);
+      color: var(--text2); font-size: .72rem; padding: 3px 0;
+      outline: none; font-family: inherit;
+    }
+    .photo-caption-input:focus { border-color: var(--gold); color: var(--text); }
+    .photo-card-actions {
+      display: flex; align-items: center; justify-content: space-between; margin-top: 6px;
+    }
+    .star-btn {
+      background: none; border: none; cursor: pointer;
+      font-size: 1rem; transition: transform .2s;
+    }
+    .star-btn:hover { transform: scale(1.2); }
+    .star-btn.active { color: var(--gold); }
+
+    /* ─── FORM ─── */
+    .form-group { margin-bottom: 20px; }
+    .form-group label {
+      display: block; font-size: .8rem; color: var(--text2);
+      letter-spacing: .08em; margin-bottom: 8px; text-transform: uppercase;
+    }
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%; background: var(--bg3);
+      border: 1px solid rgba(255,255,255,.1);
+      color: var(--text); padding: 12px 14px;
+      border-radius: var(--radius); font-size: .88rem;
+      font-family: inherit; outline: none; transition: border-color .2s;
+      resize: vertical;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus { border-color: var(--gold); }
+    .form-group small { display: block; color: var(--text2); font-size: .72rem; margin-top: 6px; }
+    .profile-preview {
+      max-width: 140px; border-radius: 8px; margin-top: 12px;
+      display: none; border: 1px solid rgba(255,255,255,.08);
+    }
+
+    /* ─── INQUIRY CARD ─── */
+    .inquiry-card {
+      background: var(--panel); border: 1px solid rgba(255,255,255,.07);
+      border-radius: var(--radius); padding: 16px; margin-bottom: 10px;
+    }
+    .inquiry-card .inq-name { font-size: .9rem; color: var(--text); margin-bottom: 4px; }
+    .inquiry-card .inq-meta { font-size: .75rem; color: var(--text2); margin-bottom: 10px; }
+    .inquiry-card .inq-msg  { font-size: .85rem; color: var(--text2); line-height: 1.6; }
+
+    /* ─── ADD FORM ─── */
+    .add-form {
+      background: var(--panel); border: 1px solid rgba(200,169,110,.15);
+      border-radius: var(--radius); padding: 20px; margin-bottom: 20px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .add-form input, .add-form textarea {
+      background: var(--bg3); border: 1px solid rgba(255,255,255,.1);
+      color: var(--text); padding: 11px 14px;
+      border-radius: var(--radius); font-size: .85rem;
+      font-family: inherit; outline: none;
+    }
+    .add-form input:focus, .add-form textarea:focus { border-color: var(--gold); }
+    .add-form-actions { display: flex; gap: 10px; }
+
+    /* ─── TOAST ─── */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--bg3); border: 1px solid rgba(200,169,110,.3);
+      color: var(--text); padding: 11px 22px; border-radius: 32px;
+      font-size: .84rem; z-index: 9999; transition: transform .3s; white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ─── MOBILE ─── */
+    @media (max-width: 640px) {
+      .sidebar { position: fixed; top: 0; left: -var(--sidebar); width: var(--sidebar); height: 100%; z-index: 50; transition: transform .3s; transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .mob-header { display: flex; }
+      .admin-main { padding-top: 0; }
+      .tab-content { padding: 20px 16px; }
+      .photos-grid { grid-template-columns: repeat(auto-fill, minmax(110px,1fr)); }
+    }
+    @media (min-width: 641px) {
+      .admin-layout { flex-direction: row; }
+      .admin-main   { height: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <h1>Stories by Rushik</h1>
+    <p>Admin Access Only</p>
+    <button class="btn-google" id="googleLoginBtn">
+      <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Sign in with Google
+    </button>
+  </div>
+</div>
+
+<!-- ADMIN DASHBOARD -->
+<div id="adminDash">
+  <div class="admin-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">SBR · Admin</div>
+      <nav class="sidebar-nav">
+        <button class="tab-btn active" data-tab="albums">📷  Albums</button>
+        <button class="tab-btn"        data-tab="photos">🖼️  Photos</button>
+        <button class="tab-btn"        data-tab="about">✍️  About</button>
+        <button class="tab-btn"        data-tab="videos">🎬  Videos</button>
+        <button class="tab-btn"        data-tab="testimonials">💬  Testimonials</button>
+        <button class="tab-btn"        data-tab="hire">💼  Hire Me</button>
+        <button class="tab-btn"        data-tab="inquiries">📬  Inquiries</button>
+      </nav>
+      <div class="sidebar-footer">
+        <div id="userInfo" style="font-size:.72rem;color:var(--text2);margin-bottom:10px;word-break:break-all;"></div>
+        <button class="btn-signout" id="signOutBtn">Sign Out</button>
+      </div>
+    </aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- MAIN -->
+    <div class="admin-main">
+      <div class="mob-header">
+        <button class="mob-menu-btn" id="mobMenuBtn">☰</button>
+        <span>SBR Admin</span>
+      </div>
+
+      <!-- ALBUMS TAB -->
+      <div class="tab-content active" id="tab-albums">
+        <h2>Albums</h2>
+        <div class="toolbar">
+          <input type="text" id="newAlbumName" placeholder="New album name…" />
+          <button class="btn-primary" id="createAlbumBtn">+ Create Album</button>
+        </div>
+        <div id="albumsList"><p style="color:var(--text2);font-size:.85rem">Loading…</p></div>
+      </div>
+
+      <!-- PHOTOS TAB -->
+      <div class="tab-content" id="tab-photos">
+        <h2>Photos</h2>
+        <div class="toolbar">
+          <select id="photoAlbumSelect" style="flex:none;width:auto;min-width:180px;background:var(--bg3);border:1px solid rgba(255,255,255,.1);color:var(--text);padding:10px 14px;border-radius:var(--radius);font-size:.85rem;outline:none;">
+            <option value="">Select album…</option>
+          </select>
+        </div>
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" id="fileInput" multiple accept="image/*" style="display:none" />
+          <div class="upload-prompt" id="uploadPrompt">
+            <p>Drop photos here or tap to choose</p>
+            <p class="upload-hint">Works from phone camera or gallery</p>
+            <label class="upload-btn-label" for="fileInput">Choose Photos</label>
+          </div>
+          <div id="uploadProgress" style="display:none">
+            <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+            <p id="progressText">Uploading…</p>
+          </div>
+        </div>
+        <div class="photos-grid" id="photosGrid"></div>
+      </div>
+
+      <!-- ABOUT TAB -->
+      <div class="tab-content" id="tab-about">
+        <h2>About</h2>
+        <div class="form-group">
+          <label>Hero Tagline</label>
+          <input type="text" id="siteTagline" placeholder="e.g. Portraits · Weddings · Nature · Travel" />
+          <small>Shown under the title on the homepage</small>
+        </div>
+        <div class="form-group">
+          <label>Your Bio</label>
+          <textarea id="aboutBioInput" rows="7" placeholder="Write your bio here…"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Profile Photo</label>
+          <input type="file" id="profilePhotoInput" accept="image/*" />
+          <img id="profilePhotoPreview" class="profile-preview" src="" alt="" />
+        </div>
+        <button class="btn-primary" id="saveAboutBtn">Save Changes</button>
+      </div>
+
+      <!-- VIDEOS TAB -->
+      <div class="tab-content" id="tab-videos">
+        <h2>Videos</h2>
+        <div class="toolbar">
+          <input type="text" id="videoUrl"   placeholder="YouTube URL (e.g. https://youtu.be/xxxx)" style="flex:2" />
+          <input type="text" id="videoTitle" placeholder="Title (optional)" style="flex:1" />
+          <button class="btn-primary" id="addVideoBtn">Add Video</button>
+        </div>
+        <div id="videosList"></div>
+      </div>
+
+      <!-- TESTIMONIALS TAB -->
+      <div class="tab-content" id="tab-testimonials">
+        <h2>Testimonials</h2>
+        <div class="toolbar">
+          <button class="btn-primary" id="showAddTestimonialBtn">+ Add Testimonial</button>
+        </div>
+        <div class="add-form" id="addTestimonialForm" style="display:none">
+          <input type="text" id="tName" placeholder="Client name" />
+          <input type="text" id="tRole" placeholder="Role (e.g. Bride, Portrait Client)" />
+          <textarea id="tText" rows="4" placeholder="What did they say?"></textarea>
+          <div class="add-form-actions">
+            <button class="btn-primary"    id="saveTestimonialBtn">Save</button>
+            <button class="btn-secondary"  id="cancelTestimonialBtn">Cancel</button>
+          </div>
+        </div>
+        <div id="testimonialsList"></div>
+      </div>
+
+      <!-- HIRE ME TAB -->
+      <div class="tab-content" id="tab-hire">
+        <h2>Hire Me Settings</h2>
+        <div class="form-group">
+          <label>Hire Me Tagline</label>
+          <textarea id="hireTaglineInput" rows="3" placeholder="e.g. Let's capture your story together…"></textarea>
+        </div>
+        <div class="form-group">
+          <label>WhatsApp Number</label>
+          <input type="text" id="whatsappNum" placeholder="+919876543210" />
+          <small>Include country code, no spaces. E.g. +919876543210</small>
+        </div>
+        <div class="form-group">
+          <label>Contact Email</label>
+          <input type="email" id="hireEmail" placeholder="your@email.com" />
+        </div>
+        <button class="btn-primary" id="saveHireBtn">Save Changes</button>
+      </div>
+
+      <!-- INQUIRIES TAB -->
+      <div class="tab-content" id="tab-inquiries">
+        <h2>Inquiries</h2>
+        <div id="inquiriesList"><p style="color:var(--text2);font-size:.85rem">Loading…</p></div>
+      </div>
+    </div><!-- /admin-main -->
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- FIREBASE + ADMIN LOGIC -->
+<script type="module">
+  import { initializeApp }
+    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut }
+    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { getFirestore, collection, getDocs, doc, getDoc, setDoc,
+           addDoc, updateDoc, deleteDoc, serverTimestamp, orderBy, query }
+    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  const ADMIN_EMAIL  = 'rushiksaikashetty@gmail.com';
+  const CLOUD_NAME   = 'dfwgpzkwc';
+  const CLOUD_PRESET = 'portfolio';
+
+  const app  = initializeApp({
+    apiKey:            "AIzaSyC0ZNL81na4pzbk-7q2IWOvbBhJhSQcM_c",
+    authDomain:        "stories-by-rushik.firebaseapp.com",
+    projectId:         "stories-by-rushik",
+    storageBucket:     "stories-by-rushik.firebasestorage.app",
+    messagingSenderId: "439626617338",
+    appId:             "1:439626617338:web:446f0d43911c44543e9443"
+  });
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+
+  // ── helpers ──────────────────────────────────────────────────
+  function toast(msg, dur=3000) {
+    const el = document.getElementById('toast');
+    el.textContent = msg; el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), dur);
+  }
+  function cdnUrl(pid, w=300) {
+    return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/w_${w},q_auto,f_auto/${pid}`;
+  }
+
+  // ── auth ─────────────────────────────────────────────────────
+  document.getElementById('googleLoginBtn').addEventListener('click', async () => {
+    try {
+      await signInWithPopup(auth, new GoogleAuthProvider());
+    } catch(e) { toast('Sign-in failed: ' + e.message); }
+  });
+
+  document.getElementById('signOutBtn').addEventListener('click', () => signOut(auth));
+
+  onAuthStateChanged(auth, user => {
+    if (user && user.email === ADMIN_EMAIL) {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('adminDash').style.display = 'block';
+      document.getElementById('userInfo').textContent = user.email;
+      initAdmin();
+    } else {
+      document.getElementById('loginScreen').style.display = 'flex';
+      document.getElementById('adminDash').style.display = 'none';
+      if (user) { signOut(auth); toast('Access denied.'); }
+    }
+  });
+
+  // ── tab routing ──────────────────────────────────────────────
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      closeSidebar();
+    });
+  });
+
+  // ── mobile sidebar ───────────────────────────────────────────
+  const sidebar  = document.getElementById('sidebar');
+  const overlay  = document.getElementById('sidebarOverlay');
+  document.getElementById('mobMenuBtn').addEventListener('click', () => {
+    sidebar.classList.add('open'); overlay.classList.add('open');
+  });
+  function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('open'); }
+  overlay.addEventListener('click', closeSidebar);
+
+  // ── init ─────────────────────────────────────────────────────
+  function initAdmin() {
+    loadAlbums();
+    loadAlbumSelect();
+    loadAboutSettings();
+    loadVideos();
+    loadTestimonials();
+    loadHireSettings();
+    loadInquiries();
+    setupUploadZone();
+  }
+
+  // ────────────────────────────────────────────────────────────
+  // ALBUMS
+  // ────────────────────────────────────────────────────────────
+  async function loadAlbums() {
+    const list = document.getElementById('albumsList');
+    list.innerHTML = '<p style="color:var(--text2);font-size:.85rem">Loading…</p>';
+    try {
+      const snap   = await getDocs(collection(db, 'albums'));
+      const albums = snap.docs.map(d => ({id:d.id,...d.data()}))
+                              .sort((a,b)=>(a.order||0)-(b.order||0));
+      list.innerHTML = '';
+      if (!albums.length) {
+        list.innerHTML = '<p style="color:var(--text2);font-size:.85rem">No albums yet. Create one above.</p>';
+        return;
+      }
+      albums.forEach(alb => list.appendChild(albumRow(alb)));
+    } catch(e) { list.innerHTML = '<p style="color:var(--red)">Error loading albums</p>'; }
+  }
+
+  function albumRow(alb) {
+    const div = document.createElement('div');
+    div.className = 'list-item';
+    div.innerHTML = `
+      <div class="list-item-info">
+        <div class="list-item-name">${alb.name}</div>
+        <div class="list-item-meta">Created ${alb.createdAt?.toDate ? alb.createdAt.toDate().toLocaleDateString() : '—'}</div>
+      </div>
+      <div class="list-actions">
+        <span class="badge ${alb.published!==false?'badge-pub':'badge-draft'}">${alb.published!==false?'Published':'Draft'}</span>
+        <button class="btn-icon" title="Rename" data-id="${alb.id}" data-action="rename">✏️</button>
+        <button class="btn-icon btn-danger" title="Delete" data-id="${alb.id}" data-action="delete-album">🗑️</button>
+        <label class="toggle" title="Publish/Draft">
+          <input type="checkbox" ${alb.published!==false?'checked':''} data-id="${alb.id}" data-action="toggle-album" />
+          <span class="toggle-slider"></span>
+        </label>
+      </div>`;
+    div.querySelectorAll('[data-action]').forEach(el => {
+      el.addEventListener('change', handleAlbumAction);
+      el.addEventListener('click',  handleAlbumAction);
+    });
+    return div;
+  }
+
+  async function handleAlbumAction(e) {
+    const action = e.currentTarget.dataset.action;
+    const id     = e.currentTarget.dataset.id;
+    if (action === 'rename') {
+      const name = prompt('New album name:');
+      if (!name || !name.trim()) return;
+      await updateDoc(doc(db,'albums',id), { name: name.trim() });
+      loadAlbums(); loadAlbumSelect(); toast('Album renamed');
+    }
+    if (action === 'delete-album') {
+      if (!confirm('Delete this album? Photos will NOT be deleted.')) return;
+      await deleteDoc(doc(db,'albums',id));
+      loadAlbums(); loadAlbumSelect(); toast('Album deleted');
+    }
+    if (action === 'toggle-album') {
+      const pub = e.currentTarget.checked;
+      await updateDoc(doc(db,'albums',id), { published: pub });
+      toast(pub ? 'Album published' : 'Album set to draft');
+      loadAlbums();
+    }
+  }
+
+  document.getElementById('createAlbumBtn').addEventListener('click', async () => {
+    const name = document.getElementById('newAlbumName').value.trim();
+    if (!name) return toast('Enter an album name first');
+    const snap = await getDocs(collection(db,'albums'));
+    await addDoc(collection(db,'albums'), {
+      name, published: false,
+      order: snap.size, createdAt: serverTimestamp()
+    });
+    document.getElementById('newAlbumName').value = '';
+    toast('Album created (set to Draft — publish when ready)');
+    loadAlbums(); loadAlbumSelect();
+  });
+
+  // ────────────────────────────────────────────────────────────
+  // PHOTOS
+  // ────────────────────────────────────────────────────────────
+  async function loadAlbumSelect() {
+    const sel = document.getElementById('photoAlbumSelect');
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">Select album…</option>';
+    const snap   = await getDocs(collection(db,'albums'));
+    const albums = snap.docs.map(d=>({id:d.id,...d.data()}))
+                            .sort((a,b)=>(a.order||0)-(b.order||0));
+    albums.forEach(alb => {
+      const opt = document.createElement('option');
+      opt.value = alb.id; opt.textContent = alb.name;
+      if (alb.id === cur) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+
+  document.getElementById('photoAlbumSelect').addEventListener('change', function() {
+    if (this.value) loadPhotos(this.value);
+    else document.getElementById('photosGrid').innerHTML = '';
+  });
+
+  async function loadPhotos(albumId) {
+    const grid = document.getElementById('photosGrid');
+    grid.innerHTML = '<p style="color:var(--text2);font-size:.85rem">Loading…</p>';
+    try {
+      const snap   = await getDocs(collection(db,'photos'));
+      const photos = snap.docs.map(d=>({id:d.id,...d.data()}))
+                              .filter(p=>p.albumId===albumId);
+      grid.innerHTML = '';
+      if (!photos.length) {
+        grid.innerHTML = '<p style="color:var(--text2);font-size:.85rem">No photos yet. Upload above.</p>';
+        return;
+      }
+      photos.forEach(p => grid.appendChild(photoCard(p)));
+    } catch(e) { grid.innerHTML = '<p style="color:var(--red)">Error loading photos</p>'; }
+  }
+
+  function photoCard(photo) {
+    const div = document.createElement('div');
+    div.className = 'photo-card';
+    div.id = 'pc-' + photo.id;
+    div.innerHTML = `
+      <img src="${cdnUrl(photo.cloudinaryId,300)}" alt="" loading="lazy" />
+      <div class="photo-card-body">
+        <input class="photo-caption-input" placeholder="Caption…" value="${photo.caption||''}" data-id="${photo.id}" />
+        <div class="photo-card-actions">
+          <button class="star-btn ${photo.featured?'active':''}" title="Toggle Featured" data-id="${photo.id}" data-action="toggle-featured">
+            ${photo.featured?'⭐':'☆'}
+          </button>
+          <label class="toggle" title="Publish/Draft">
+            <input type="checkbox" ${photo.published!==false?'checked':''} data-id="${photo.id}" data-action="toggle-photo" />
+            <span class="toggle-slider"></span>
+          </label>
+          <button class="btn-icon btn-danger" data-id="${photo.id}" data-action="delete-photo" title="Delete">🗑️</button>
+        </div>
+      </div>`;
+
+    // caption blur → save
+    div.querySelector('.photo-caption-input').addEventListener('blur', async function() {
+      await updateDoc(doc(db,'photos',this.dataset.id), { caption: this.value });
+      toast('Caption saved');
+    });
+    // featured toggle
+    div.querySelector('[data-action="toggle-featured"]').addEventListener('click', async function() {
+      const id  = this.dataset.id;
+      const cur = this.classList.contains('active');
+      await updateDoc(doc(db,'photos',id), { featured: !cur });
+      this.classList.toggle('active');
+      this.textContent = !cur ? '⭐' : '☆';
+      toast(!cur ? 'Added to Featured Wall' : 'Removed from Featured Wall');
+    });
+    // publish toggle
+    div.querySelector('[data-action="toggle-photo"]').addEventListener('change', async function() {
+      await updateDoc(doc(db,'photos',this.dataset.id), { published: this.checked });
+      toast(this.checked ? 'Photo published' : 'Photo set to draft');
+    });
+    // delete
+    div.querySelector('[data-action="delete-photo"]').addEventListener('click', async function() {
+      if (!confirm('Delete this photo? It will also be removed from Cloudinary if you manage that separately.')) return;
+      await deleteDoc(doc(db,'photos',this.dataset.id));
+      document.getElementById('pc-'+this.dataset.id)?.remove();
+      toast('Photo deleted');
+    });
+    return div;
+  }
+
+  // ─── UPLOAD ──────────────────────────────────────────────────
+  function setupUploadZone() {
+    const zone     = document.getElementById('uploadZone');
+    const fileInput= document.getElementById('fileInput');
+
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave',  () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault(); zone.classList.remove('drag-over');
+      uploadFiles(e.dataTransfer.files);
+    });
+    fileInput.addEventListener('change', () => uploadFiles(fileInput.files));
+  }
+
+  async function uploadFiles(files) {
+    const albumId = document.getElementById('photoAlbumSelect').value;
+    if (!albumId) { toast('Select an album first!'); return; }
+    if (!files.length) return;
+
+    const prompt  = document.getElementById('uploadPrompt');
+    const progress= document.getElementById('uploadProgress');
+    const fill    = document.getElementById('progressFill');
+    const text    = document.getElementById('progressText');
+
+    prompt.style.display   = 'none';
+    progress.style.display = 'block';
+
+    let done = 0;
+    for (const file of Array.from(files)) {
+      text.textContent = `Uploading ${done+1} of ${files.length}…`;
+      fill.style.width = `${Math.round((done/files.length)*100)}%`;
+      try {
+        const { publicId, url } = await uploadToCloudinary(file);
+        await addDoc(collection(db,'photos'), {
+          albumId, cloudinaryId: publicId, cloudinaryUrl: url,
+          caption: '', featured: false, published: true,
+          uploadedAt: serverTimestamp()
+        });
+        done++;
+      } catch(e) { toast('Upload failed: ' + e.message); }
+    }
+
+    fill.style.width = '100%';
+    text.textContent = `Done! ${done} photo${done>1?'s':''} uploaded.`;
+    setTimeout(() => {
+      progress.style.display = 'none';
+      prompt.style.display   = 'block';
+    }, 2000);
+
+    document.getElementById('fileInput').value = '';
+    loadPhotos(albumId);
+    toast(`${done} photo${done>1?'s':''} uploaded ✓`);
+  }
+
+  async function uploadToCloudinary(file) {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('upload_preset', CLOUD_PRESET);
+    fd.append('folder', 'stories-by-rushik');
+    const res  = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method:'POST', body:fd });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    return { publicId: data.public_id, url: data.secure_url };
+  }
+
+  // ────────────────────────────────────────────────────────────
+  // ABOUT / SETTINGS
+  // ────────────────────────────────────────────────────────────
+  async function loadAboutSettings() {
+    try {
+      const snap = await getDoc(doc(db,'settings','site'));
+      if (!snap.exists()) return;
+      const d = snap.data();
+      if (d.tagline)     document.getElementById('siteTagline').value      = d.tagline;
+      if (d.aboutBio)    document.getElementById('aboutBioInput').value    = d.aboutBio;
+      if (d.hireTagline) document.getElementById('hireTaglineInput').value = d.hireTagline;
+      if (d.whatsapp)    document.getElementById('whatsappNum').value      = d.whatsapp;
+      if (d.hireEmail)   document.getElementById('hireEmail').value        = d.hireEmail;
+      if (d.aboutPhoto) {
+        const preview = document.getElementById('profilePhotoPreview');
+        preview.src = d.aboutPhoto; preview.style.display = 'block';
+      }
+    } catch(e) { console.warn(e); }
+  }
+
+  document.getElementById('profilePhotoInput').addEventListener('change', async function() {
+    if (!this.files[0]) return;
+    toast('Uploading profile photo…');
+    try {
+      const { url } = await uploadToCloudinary(this.files[0]);
+      await setDoc(doc(db,'settings','site'), { aboutPhoto: url }, { merge: true });
+      const preview = document.getElementById('profilePhotoPreview');
+      preview.src = url; preview.style.display = 'block';
+      toast('Profile photo updated ✓');
+    } catch(e) { toast('Upload failed: ' + e.message); }
+  });
+
+  document.getElementById('saveAboutBtn').addEventListener('click', async () => {
+    await setDoc(doc(db,'settings','site'), {
+      tagline:  document.getElementById('siteTagline').value.trim(),
+      aboutBio: document.getElementById('aboutBioInput').value.trim()
+    }, { merge: true });
+    toast('About section saved ✓');
+  });
+
+  // ────────────────────────────────────────────────────────────
+  // HIRE ME
+  // ────────────────────────────────────────────────────────────
+  async function loadHireSettings() {
+    // already loaded in loadAboutSettings
+  }
+
+  document.getElementById('saveHireBtn').addEventListener('click', async () => {
+    await setDoc(doc(db,'settings','site'), {
+      hireTagline: document.getElementById('hireTaglineInput').value.trim(),
+      whatsapp:    document.getElementById('whatsappNum').value.trim(),
+      hireEmail:   document.getElementById('hireEmail').value.trim()
+    }, { merge: true });
+    toast('Hire Me settings saved ✓');
+  });
+
+  // ────────────────────────────────────────────────────────────
+  // VIDEOS
+  // ────────────────────────────────────────────────────────────
+  async function loadVideos() {
+    const list = document.getElementById('videosList');
+    list.innerHTML = '<p style="color:var(--text2);font-size:.85rem">Loading…</p>';
+    try {
+      const snap   = await getDocs(collection(db,'videos'));
+      const videos = snap.docs.map(d=>({id:d.id,...d.data()}))
+                              .sort((a,b)=>(a.order||0)-(b.order||0));
+      list.innerHTML = '';
+      if (!videos.length) {
+        list.innerHTML = '<p style="color:var(--text2);font-size:.85rem">No videos yet.</p>';
+        return;
+      }
+      videos.forEach(v => {
+        const div = document.createElement('div');
+        div.className = 'list-item';
+        div.innerHTML = `
+          <div class="list-item-info">
+            <div class="list-item-name">${v.title || v.url}</div>
+            <div class="list-item-meta">${v.url}</div>
+          </div>
+          <div class="list-actions">
+            <span class="badge ${v.published!==false?'badge-pub':'badge-draft'}">${v.published!==false?'Live':'Hidden'}</span>
+            <label class="toggle">
+              <input type="checkbox" ${v.published!==false?'checked':''} data-id="${v.id}" />
+              <span class="toggle-slider"></span>
+            </label>
+            <button class="btn-icon btn-danger" data-id="${v.id}">🗑️</button>
+          </div>`;
+        div.querySelector('input[type="checkbox"]').addEventListener('change', async function() {
+          await updateDoc(doc(db,'videos',this.dataset.id), { published: this.checked });
+          toast(this.checked ? 'Video published' : 'Video hidden'); loadVideos();
+        });
+        div.querySelector('.btn-danger').addEventListener('click', async function() {
+          if (!confirm('Remove this video?')) return;
+          await deleteDoc(doc(db,'videos',this.dataset.id));
+          loadVideos(); toast('Video removed');
+        });
+        list.appendChild(div);
+      });
+    } catch(e) {}
+  }
+
+  document.getElementById('addVideoBtn').addEventListener('click', async () => {
+    const url   = document.getElementById('videoUrl').value.trim();
+    const title = document.getElementById('videoTitle').value.trim();
+    if (!url) return toast('Paste a YouTube URL first');
+    const snap = await getDocs(collection(db,'videos'));
+    await addDoc(collection(db,'videos'), {
+      url, title, published: true,
+      order: snap.size, createdAt: serverTimestamp()
+    });
+    document.getElementById('videoUrl').value   = '';
+    document.getElementById('videoTitle').value = '';
+    loadVideos(); toast('Video added ✓');
+  });
+
+  // ────────────────────────────────────────────────────────────
+  // TESTIMONIALS
+  // ────────────────────────────────────────────────────────────
+  async function loadTestimonials() {
+    const list = document.getElementById('testimonialsList');
+    list.innerHTML = '<p style="color:var(--text2);font-size:.85rem">Loading…</p>';
+    try {
+      const snap = await getDocs(collection(db,'testimonials'));
+      const items = snap.docs.map(d=>({id:d.id,...d.data()}));
+      list.innerHTML = '';
+      if (!items.length) {
+        list.innerHTML = '<p style="color:var(--text2);font-size:.85rem">No testimonials yet.</p>';
+        return;
+      }
+      items.forEach(t => {
+        const div = document.createElement('div');
+        div.className = 'list-item';
+        div.style.flexDirection = 'column';
+        div.style.alignItems    = 'flex-start';
+        div.innerHTML = `
+          <div style="display:flex;align-items:center;width:100%;gap:10px;margin-bottom:6px;">
+            <div class="list-item-info">
+              <div class="list-item-name">${t.name}${t.role?` <span style="color:var(--text2);font-size:.78rem">· ${t.role}</span>`:''}</div>
+            </div>
+            <div class="list-actions">
+              <span class="badge ${t.approved?'badge-approved':'badge-pending'}">${t.approved?'Live':'Pending'}</span>
+              ${!t.approved?`<button class="btn-icon" title="Approve" data-id="${t.id}" data-action="approve">✅</button>`:''}
+              <button class="btn-icon btn-danger" data-id="${t.id}" data-action="delete-t">🗑️</button>
+            </div>
+          </div>
+          <p style="color:var(--text2);font-size:.82rem;font-style:italic">"${t.text}"</p>`;
+        div.querySelectorAll('[data-action]').forEach(el => el.addEventListener('click', async function() {
+          if (this.dataset.action === 'approve') {
+            await updateDoc(doc(db,'testimonials',this.dataset.id), { approved: true });
+            loadTestimonials(); toast('Testimonial approved ✓');
+          }
+          if (this.dataset.action === 'delete-t') {
+            if (!confirm('Delete testimonial?')) return;
+            await deleteDoc(doc(db,'testimonials',this.dataset.id));
+            loadTestimonials(); toast('Deleted');
+          }
+        }));
+        list.appendChild(div);
+      });
+    } catch(e) {}
+  }
+
+  document.getElementById('showAddTestimonialBtn').addEventListener('click', () => {
+    document.getElementById('addTestimonialForm').style.display = 'flex';
+  });
+  document.getElementById('cancelTestimonialBtn').addEventListener('click', () => {
+    document.getElementById('addTestimonialForm').style.display = 'none';
+  });
+  document.getElementById('saveTestimonialBtn').addEventListener('click', async () => {
+    const name = document.getElementById('tName').value.trim();
+    const role = document.getElementById('tRole').value.trim();
+    const text = document.getElementById('tText').value.trim();
+    if (!name || !text) return toast('Name and text are required');
+    await addDoc(collection(db,'testimonials'), {
+      name, role, text, approved: true, createdAt: serverTimestamp()
+    });
+    document.getElementById('tName').value = '';
+    document.getElementById('tRole').value = '';
+    document.getElementById('tText').value = '';
+    document.getElementById('addTestimonialForm').style.display = 'none';
+    loadTestimonials(); toast('Testimonial added ✓');
+  });
+
+  // ────────────────────────────────────────────────────────────
+  // INQUIRIES
+  // ────────────────────────────────────────────────────────────
+  async function loadInquiries() {
+    const list = document.getElementById('inquiriesList');
+    list.innerHTML = '<p style="color:var(--text2);font-size:.85rem">Loading…</p>';
+    try {
+      const snap   = await getDocs(collection(db,'inquiries'));
+      const items  = snap.docs.map(d=>({id:d.id,...d.data()}))
+                              .sort((a,b)=> {
+                                const ta = a.createdAt?.seconds||0;
+                                const tb = b.createdAt?.seconds||0;
+                                return tb - ta;
+                              });
+      list.innerHTML = '';
+      if (!items.length) {
+        list.innerHTML = '<p style="color:var(--text2);font-size:.85rem">No inquiries yet.</p>';
+        return;
+      }
+      items.forEach(inq => {
+        const div = document.createElement('div');
+        div.className = 'inquiry-card';
+        const date = inq.createdAt?.toDate ? inq.createdAt.toDate().toLocaleDateString() : '—';
+        div.innerHTML = `
+          <div class="inq-name">${inq.name} <span class="badge badge-new" style="font-size:.65rem">${inq.type||'general'}</span></div>
+          <div class="inq-meta">${inq.email} · ${date}</div>
+          <div class="inq-msg">${inq.message||'—'}</div>`;
+        list.appendChild(div);
+      });
+    } catch(e) { list.innerHTML = '<p style="color:var(--red)">Error loading inquiries</p>'; }
+  }
+</script>
+</body>
+</html>
