@@ -662,13 +662,7 @@
     grid.innerHTML = '<div class="loading">Loading…</div>';
     try {
       const photos = await getPhotos();
-      const list   = photos.filter(p => p.albumId === albumId)
-                           .sort((a,b) => {
-                             if (a.order != null && b.order != null) return a.order - b.order;
-                             if (a.order != null) return -1;
-                             if (b.order != null) return 1;
-                             return (a.uploadedAt?.seconds||0) - (b.uploadedAt?.seconds||0);
-                           });
+      const list   = photos.filter(p => p.albumId === albumId);
       if (!list.length) { grid.innerHTML = '<div class="empty-state">No photos yet</div>'; return; }
       grid.innerHTML = '';
       list.forEach((p, i) => {
