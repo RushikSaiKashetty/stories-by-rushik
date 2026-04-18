@@ -134,10 +134,10 @@
 
     /* ─── HERO ─── */
     .hero {
-      min-height: 58vh;
+      min-height: 92vh;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      text-align: center; padding: 40px 24px 32px;
+      text-align: center; padding: 40px 24px;
     }
     .hero h1 {
       font-size: clamp(2.8rem, 9vw, 6.5rem);
@@ -316,45 +316,6 @@
       color: rgba(255,255,255,.55); font-size: .82rem; font-family: sans-serif; text-align: center; max-width: 80vw;
     }
 
-    /* ─── PHOTO REEL ─── */
-    .reel-section {
-      width: 100%; overflow: hidden;
-      padding: 0; margin-top: -2px;
-      position: relative; z-index: 1;
-    }
-    /* fade edges */
-    .reel-section::before,
-    .reel-section::after {
-      content: ''; position: absolute;
-      top: 0; bottom: 0; width: 80px; z-index: 2; pointer-events: none;
-    }
-    .reel-section::before { left: 0;  background: linear-gradient(to right, var(--bg), transparent); }
-    .reel-section::after  { right: 0; background: linear-gradient(to left,  var(--bg), transparent); }
-
-    .reel-track {
-      display: flex; gap: 10px;
-      width: max-content;
-      animation: reel-scroll 35s linear infinite;
-    }
-    .reel-track:hover { animation-play-state: paused; }
-
-    .reel-photo {
-      height: 200px; width: auto;
-      border-radius: var(--radius);
-      object-fit: cover; flex-shrink: 0;
-      cursor: pointer;
-      transition: transform .3s ease, opacity .3s ease;
-      opacity: .85;
-    }
-    .reel-photo:hover { transform: scale(1.03); opacity: 1; }
-
-    @keyframes reel-scroll {
-      0%   { transform: translateX(0); }
-      100% { transform: translateX(-50%); }
-    }
-    @media (min-width: 640px) { .reel-photo { height: 240px; } }
-    @media (min-width: 1024px) { .reel-photo { height: 280px; } }
-
     /* ─── CURSOR & FOCUS ─── */
     .photo-item, .featured-photo, .album-tab,
     .nav-ig, .nav-vsco, .social-btn,
@@ -483,11 +444,6 @@
     <p class="hero-tagline" id="heroTagline">Portraits · Weddings · Nature · Travel</p>
     <a href="#work" class="hero-scroll">↓ View Work</a>
   </section>
-
-  <!-- PHOTO REEL -->
-  <div class="reel-section" id="reelSection">
-    <div class="reel-track" id="reelTrack"></div>
-  </div>
 
   <!-- FEATURED -->
   <section id="featured">
@@ -812,35 +768,8 @@
     if (Math.abs(diff) > 50) diff>0 ? document.getElementById('lbNext').click() : document.getElementById('lbPrev').click();
   });
 
-  // REEL
-  async function loadReel() {
-    const track = document.getElementById('reelTrack');
-    try {
-      const photos = await getPhotos();
-      if (!photos.length) { document.getElementById('reelSection').style.display = 'none'; return; }
-
-      // shuffle for variety
-      const shuffled = [...photos].sort(() => Math.random() - 0.5);
-
-      // build photos + duplicate for seamless loop
-      const makeImg = (p) => {
-        const img = document.createElement('img');
-        img.className = 'reel-photo';
-        img.src = cdnUrl(p.cloudinaryId, 500);
-        img.alt = p.caption || '';
-        img.loading = 'lazy';
-        img.onclick = () => openLb(photos.indexOf(p), photos);
-        return img;
-      };
-
-      // fill track with photos + clone for seamless loop
-      shuffled.forEach(p => track.appendChild(makeImg(p)));
-      shuffled.forEach(p => track.appendChild(makeImg(p))); // duplicate
-    } catch(e) { document.getElementById('reelSection').style.display = 'none'; }
-  }
-
   // INIT
-  loadSettings(); loadReel(); loadFeatured(); loadAlbums(); loadVideos(); loadTestimonials();
+  loadSettings(); loadFeatured(); loadAlbums(); loadVideos(); loadTestimonials();
 </script>
 
 <!-- HAMBURGER -->
