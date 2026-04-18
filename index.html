@@ -6,6 +6,11 @@
   <title>Stories by Rushik</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23030308'/><text x='16' y='23' font-family='Georgia,serif' font-size='20' fill='%23c8a96e' text-anchor='middle' font-weight='400'>R</text></svg>" />
 
+  <!-- FONTS: Cormorant (headings) + Montserrat (UI) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
   <!-- SEO -->
   <meta name="description" content="Photography portfolio by Rushik — Portraits, Weddings, Nature and Travel photography." />
   <meta name="keywords" content="Rushik, photographer, portraits, wedding photography, nature, travel, Stories by Rushik" />
@@ -42,9 +47,16 @@
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: 'Georgia', serif;
+      font-family: 'Montserrat', sans-serif;
       min-height: 100vh;
       overflow-x: hidden;
+    }
+
+    /* Cormorant for all editorial headings */
+    h1, h2, h3,
+    .nav-logo, .hero h1, .section-title,
+    .about-text h2, .about-bio, .testimonial-text {
+      font-family: 'Cormorant', serif;
     }
 
     #starCanvas {
@@ -128,8 +140,8 @@
       text-align: center; padding: 40px 24px;
     }
     .hero h1 {
-      font-size: clamp(2.4rem, 8vw, 5.5rem);
-      font-weight: 300; letter-spacing: 0.12em; line-height: 1.1; margin-bottom: 16px;
+      font-size: clamp(2.8rem, 9vw, 6.5rem);
+      font-weight: 300; letter-spacing: 0.15em; line-height: 1.05; margin-bottom: 16px;
     }
     .hero h1 span { color: var(--gold); }
     .hero-tagline {
@@ -163,7 +175,7 @@
       break-inside: avoid; margin-bottom: 8px;
       overflow: hidden; border-radius: var(--radius); cursor: pointer;
     }
-    .featured-photo img { width: 100%; display: block; transition: transform .45s ease; }
+    .featured-photo img { width: 100%; display: block; transition: transform .3s ease; }
     .featured-photo:hover img { transform: scale(1.04); }
 
     /* ─── ALBUM TABS ─── */
@@ -186,7 +198,7 @@
       overflow: hidden; border-radius: var(--radius);
       cursor: pointer; position: relative;
     }
-    .photo-item img { width: 100%; display: block; transition: transform .45s ease; }
+    .photo-item img { width: 100%; display: block; transition: transform .3s ease; }
     .photo-item:hover img { transform: scale(1.04); }
     .photo-overlay {
       position: absolute; bottom: 0; left: 0; right: 0;
@@ -302,6 +314,26 @@
     .lb-caption {
       position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
       color: rgba(255,255,255,.55); font-size: .82rem; font-family: sans-serif; text-align: center; max-width: 80vw;
+    }
+
+    /* ─── CURSOR & FOCUS ─── */
+    .photo-item, .featured-photo, .album-tab,
+    .nav-ig, .nav-vsco, .social-btn,
+    .btn-whatsapp, .btn-submit, .hero-scroll,
+    .lb-close, .lb-prev, .lb-next,
+    .mobile-menu a, .footer-social a { cursor: pointer; }
+
+    *:focus-visible {
+      outline: 2px solid var(--gold);
+      outline-offset: 3px;
+      border-radius: 4px;
+    }
+
+    /* ─── REDUCED MOTION ─── */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+      .hero-scroll { animation: none; }
+      #starCanvas { display: none; }
     }
 
     /* ─── SKELETON ─── */
