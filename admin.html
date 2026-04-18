@@ -148,9 +148,33 @@
       background: var(--panel); border: 1px solid rgba(255,255,255,.07);
       border-radius: var(--radius); padding: 14px 16px;
       display: flex; align-items: center; gap: 12px;
-      margin-bottom: 8px; transition: border-color .2s;
+      margin-bottom: 8px; transition: border-color .2s, opacity .2s;
     }
     .list-item:hover { border-color: rgba(200,169,110,.2); }
+
+    /* ─── DRAG & DROP ─── */
+    .drag-handle {
+      color: var(--text2); cursor: grab; opacity: .4;
+      transition: opacity .15s; flex-shrink: 0;
+      display: flex; align-items: center; padding: 2px;
+    }
+    .drag-handle:hover { opacity: 1; }
+    .drag-handle:active { cursor: grabbing; }
+    .list-item.is-dragging { opacity: .3; border-style: dashed; }
+    .list-item.drop-target { border-color: var(--gold); background: rgba(200,169,110,.07); }
+    .photo-card { position: relative; }
+    .photo-drag-handle {
+      position: absolute; top: 0; left: 0; z-index: 2;
+      padding: 5px 6px; cursor: grab;
+      background: rgba(0,0,0,.6); color: var(--text2);
+      border-radius: 0 0 6px 0; opacity: 0;
+      transition: opacity .15s; line-height: 1;
+    }
+    .photo-drag-handle:active { cursor: grabbing; }
+    .photo-card:hover .photo-drag-handle { opacity: 1; }
+    .photo-card.is-dragging { opacity: .3; }
+    .photo-card.drop-target { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(200,169,110,.3); }
+    .reorder-hint { font-size:.72rem; color:var(--text2); opacity:.6; margin-bottom:14px; }
     .list-item-info { flex: 1; min-width: 0; }
     .list-item-name { font-size: .9rem; color: var(--text); margin-bottom: 2px; }
     .list-item-meta { font-size: .75rem; color: var(--text2); }
@@ -592,14 +616,80 @@
         list.innerHTML = '<p style="color:var(--text2);font-size:.85rem">No albums yet. Create one above.</p>';
         return;
       }
+      list.innerHTML = '<p class="reorder-hint">Drag ≡ to reorder — order is saved automatically</p>';
       albums.forEach(alb => list.appendChild(albumRow(alb)));
+      setupAlbumDrag();
     } catch(e) { list.innerHTML = '<p style="color:var(--red)">Error loading albums</p>'; }
+  }
+
+  // ── generic drag-to-reorder ───────────────────────────────
+  function setupDrag(container, selector, onDrop) {
+    let dragged = null;
+    container.addEventListener('dragstart', e => {
+      dragged = e.target.closest(selector);
+      if (!dragged) return;
+      dragged.classList.add('is-dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    container.addEventListener('dragend', () => {
+      container.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
+      if (dragged) dragged.classList.remove('is-dragging');
+      dragged = null;
+    });
+    container.addEventListener('dragover', e => {
+      e.preventDefault();
+      const target = e.target.closest(selector);
+      if (!target || target === dragged) return;
+      container.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
+      target.classList.add('drop-target');
+      e.dataTransfer.dropEffect = 'move';
+    });
+    container.addEventListener('drop', e => {
+      e.preventDefault();
+      const target = e.target.closest(selector);
+      if (!target || target === dragged || !dragged) return;
+      target.classList.remove('drop-target');
+      const items   = [...container.querySelectorAll(selector)];
+      const fromIdx = items.indexOf(dragged);
+      const toIdx   = items.indexOf(target);
+      if (fromIdx < toIdx) target.after(dragged);
+      else target.before(dragged);
+      onDrop([...container.querySelectorAll(selector)].map(el => el.dataset.id));
+    });
+  }
+
+  function setupAlbumDrag() {
+    const list = document.getElementById('albumsList');
+    setupDrag(list, '.list-item', async (orderedIds) => {
+      for (let i = 0; i < orderedIds.length; i++) {
+        updateDoc(doc(db,'albums',orderedIds[i]), { order: i });
+      }
+      toast('Album order saved ✓');
+      loadAlbumSelect();
+    });
+  }
+
+  function setupPhotoDrag(albumId) {
+    const grid = document.getElementById('photosGrid');
+    setupDrag(grid, '.photo-card', async (orderedIds) => {
+      for (let i = 0; i < orderedIds.length; i++) {
+        updateDoc(doc(db,'photos',orderedIds[i]), { order: i });
+      }
+      toast('Photo order saved ✓');
+    });
   }
 
   function albumRow(alb) {
     const div = document.createElement('div');
     div.className = 'list-item';
+    div.draggable = true;
+    div.dataset.id = alb.id;
     div.innerHTML = `
+      <div class="drag-handle" title="Drag to reorder">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/>
+        </svg>
+      </div>
       <div class="list-item-info">
         <div class="list-item-name">${alb.name}</div>
         <div class="list-item-meta">Created ${alb.createdAt?.toDate ? alb.createdAt.toDate().toLocaleDateString() : '—'}</div>
@@ -684,13 +774,25 @@
     try {
       const snap   = await getDocs(collection(db,'photos'));
       const photos = snap.docs.map(d=>({id:d.id,...d.data()}))
-                              .filter(p=>p.albumId===albumId);
+                              .filter(p=>p.albumId===albumId)
+                              .sort((a,b) => {
+                                if (a.order != null && b.order != null) return a.order - b.order;
+                                if (a.order != null) return -1;
+                                if (b.order != null) return 1;
+                                return (a.uploadedAt?.seconds||0) - (b.uploadedAt?.seconds||0);
+                              });
       grid.innerHTML = '';
       if (!photos.length) {
         grid.innerHTML = '<p style="color:var(--text2);font-size:.85rem">No photos yet. Upload above.</p>';
         return;
       }
+      const hint = document.createElement('p');
+      hint.className = 'reorder-hint';
+      hint.style.gridColumn = '1 / -1';
+      hint.textContent = 'Hover a photo and drag ≡ to reorder';
+      grid.appendChild(hint);
       photos.forEach(p => grid.appendChild(photoCard(p)));
+      setupPhotoDrag(albumId);
     } catch(e) { grid.innerHTML = '<p style="color:var(--red)">Error loading photos</p>'; }
   }
 
@@ -698,7 +800,14 @@
     const div = document.createElement('div');
     div.className = 'photo-card';
     div.id = 'pc-' + photo.id;
+    div.dataset.id = photo.id;
+    div.draggable = true;
     div.innerHTML = `
+      <div class="photo-drag-handle" title="Drag to reorder">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </div>
       <img src="${cdnUrl(photo.cloudinaryId,300)}" alt="" loading="lazy" />
       <div class="photo-card-body">
         <input class="photo-caption-input" placeholder="Caption…" value="${photo.caption||''}" data-id="${photo.id}" />
